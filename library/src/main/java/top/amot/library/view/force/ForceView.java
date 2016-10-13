@@ -19,6 +19,13 @@ import java.util.List;
  */
 public class ForceView extends View implements ForceListener {
 
+    private static final int[] colors = {
+            Color.parseColor("#e75988"),
+            Color.parseColor("#d4d9ae"),
+            Color.parseColor("#b9d6e5"),
+            Color.parseColor("#e5b9ce")
+    };
+
     private Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private Paint strokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -104,8 +111,6 @@ public class ForceView extends View implements ForceListener {
             drawLinks(canvas, selectedLinks);
         }
 
-        strokePaint.setColor(Color.BLUE);
-        textPaint.setColor(Color.BLUE);
         drawNodes(canvas, force.nodes);
 
         if (!selectedNodes.isEmpty()) {
@@ -136,14 +141,23 @@ public class ForceView extends View implements ForceListener {
         if (nodes == null) {
             return;
         }
+
         for (int i = 0; i < nodes.size(); i++) {
             FNode node = nodes.get(i);
+            resetPaintColor(node.getLevel());
             float cx = node.x;
             float cy = node.y;
             canvas.drawCircle(cx, cy, node.getRadius(), paint);
             canvas.drawText(node.getText(), cx, cy - textBaseline, textPaint);
-            canvas.drawCircle(cx, cy, node.getRadius(), strokePaint);
+//            canvas.drawCircle(cx, cy, node.getRadius(), strokePaint);
         }
+    }
+
+    private void resetPaintColor(int level) {
+        paint.setColor(colors[(level - 1) % colors.length]);
+        textPaint.setColor(Color.WHITE);
+        textPaint.setAlpha(192);
+//        strokePaint.setColor(colors[(level - 1) % colors.length]);
     }
 
     @Override
