@@ -148,14 +148,14 @@ class Force {
         return (float) (Math.random() * max);
     }
 
-    FNode getNode(float x, float y) {
+    FNode getNode(float x, float y, float scale) {
         if (nodes == null) {
             return null;
         }
 
         for (int i = nodes.size() - 1; i >= 0; i--) {
             FNode node = nodes.get(i);
-            if (node.isInside(x, y)) {
+            if (node.isInside(x, y, scale)) {
                 return node;
             }
         }
@@ -189,7 +189,8 @@ class Force {
             double d = dx * dx + dy * dy;
             if (d > 0) {
                 d = Math.sqrt(d);
-                d = alpha * strength * (d - linkDistance(link)) / d;
+
+                d = alpha * linkStrength(link) * (d - linkDistance(link)) / d;
                 dx *= d;
                 dy *= d;
 
@@ -240,6 +241,18 @@ class Force {
             listener.refresh();
         }
 
+    }
+
+    private float linkStrength(FLink link) {
+        float k = 1;
+        if (link != null) {
+//            int sl = link.source.getLevel();
+//            int tl = link.target.getLevel();
+//            if(sl > 0 && tl > 0) {
+//                    k = (sl + tl) * 0.5f;
+//            }
+        }
+        return strength * k;
     }
 
     private QuadTree getQuadTree(List<FNode> nodes) {
@@ -304,8 +317,7 @@ class Force {
                 root.point.x += Math.random() - 0.5;
                 root.point.y += Math.random() - 0.5;
             }
-            float level = root.point.getLevel();
-            float k = alpha * charge / (level == 0 ? 1f : (level + 1));
+            float k = alpha * nodeCharge(root.point);
             root.pointCharge = k;
             root.charge += k;
             cx += k * root.point.x;
@@ -314,6 +326,17 @@ class Force {
 
         root.cx = cx / root.charge;
         root.cy = cy / root.charge;
+    }
+
+    private float nodeCharge(FNode node) {
+        if (node == null) {
+            return charge;
+        }
+        int level = node.getLevel();
+        if (level <= 1) {
+            return charge;
+        }
+        return charge * node.getRadius() / level / 5f;
     }
 
     private boolean repulse(QuadTree.Node root, FNode node, float x1, float x2) {

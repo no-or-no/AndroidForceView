@@ -65,11 +65,11 @@ public class FNode {
         return level == ROOT_NODE_LEVEL;
     }
 
-    boolean isInside(float x, float y) {
-        float left = this.x - radius;
-        float top = this.y - radius;
-        float right = this.x + radius;
-        float bottom = this.y + radius;
+    boolean isInside(float x, float y, float scale) {
+        float left = this.x - radius * scale;
+        float top = this.y - radius * scale;
+        float right = this.x + radius * scale;
+        float bottom = this.y + radius * scale;
         return x >= left && x <= right && y >= top && y <= bottom;
     }
 
