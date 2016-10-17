@@ -1,6 +1,7 @@
 package top.amot.library.view.force;
 
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 
 import java.lang.ref.WeakReference;
@@ -38,7 +39,7 @@ class Force {
     private float theta = DEFAULT_THETA;
     private float alpha = DEFAULT_ALPHA;
 
-    private ForceHandler handler = new ForceHandler(this);
+    private ForceHandler handler;
     private Timer timer;
     private TimerTask task;
 
@@ -46,14 +47,17 @@ class Force {
 
     Force(ForceListener listener) {
         this.listener = listener;
+        handler = new ForceHandler(this, Looper.getMainLooper());
     }
 
     Force setNodes(List<FNode> nodes) {
+//        this.nodes = Collections.synchronizedList(nodes);
         this.nodes = nodes;
         return this;
     }
 
     Force setLinks(List<FLink> links) {
+//        this.links = Collections.synchronizedList(links);
         this.links = links;
         return this;
     }
@@ -405,9 +409,11 @@ class Force {
     private static class ForceHandler extends Handler {
         private WeakReference<Force> forceReference;
 
-        ForceHandler(Force force) {
+        ForceHandler(Force force, Looper looper) {
+            super(looper);
             forceReference = new WeakReference<Force>(force);
         }
+
 
         @Override
         public void handleMessage(Message msg) {
@@ -422,6 +428,7 @@ class Force {
         @Override
         public void run() {
             handler.sendEmptyMessage(0);
+//            tick();
         }
     }
 
