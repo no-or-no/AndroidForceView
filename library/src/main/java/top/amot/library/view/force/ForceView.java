@@ -198,8 +198,8 @@ public class ForceView extends View implements ForceListener {
                 y0 = downY = y = event.getY();
                 if (!isScaling) {
                     node = force.getNode(
-                            (x - translateX),
-                            (y - translateY),
+                            x + pointerX * (scale - 1) - translateX,
+                            y + pointerY * (scale - 1) - translateY,
                             scale);
                     if (node != null) {
                         selectedColor = getColor(node.getLevel());
@@ -226,8 +226,8 @@ public class ForceView extends View implements ForceListener {
                 y = event.getY(pointerIndex);
                 if (Math.abs((x - x0) * (x - y0)) > touchSlop) {
                     if (node != null) {
-                        node.px = x - translateX;
-                        node.py = y - translateY;
+                        node.px = (x + pointerX * (scale - 1) - translateX) / scale;
+                        node.py = (y + pointerY * (scale - 1) - translateY) / scale;
                         force.resume();
                     } else {
                         translateX += x - downX;

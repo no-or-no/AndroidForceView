@@ -66,10 +66,10 @@ public class FNode {
     }
 
     boolean isInside(float x, float y, float scale) {
-        float left = this.x - radius * scale;
-        float top = this.y - radius * scale;
-        float right = this.x + radius * scale;
-        float bottom = this.y + radius * scale;
+        float left = (this.x - radius) * scale;
+        float top = (this.y - radius) * scale;
+        float right = (this.x + radius) * scale;
+        float bottom = (this.y + radius) * scale;
         return x >= left && x <= right && y >= top && y <= bottom;
     }
 
