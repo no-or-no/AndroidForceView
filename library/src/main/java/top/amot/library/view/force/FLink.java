@@ -6,8 +6,8 @@ package top.amot.library.view.force;
 
 public class FLink {
 
-    final FNode source;
-    final FNode target;
+    FNode source;
+    FNode target;
     private String text;
 
     public FLink(FNode source, FNode target) {
@@ -22,4 +22,11 @@ public class FLink {
     public void setText(String text) {
         this.text = text;
     }
+
+    double getNodeDistance() {
+        float dx = source.x - target.x;
+        float dy = source.y - target.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
 }

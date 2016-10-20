@@ -5,6 +5,7 @@ import android.os.Looper;
 import android.os.Message;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -15,7 +16,7 @@ import java.util.TimerTask;
 
 class Force {
 
-    private static final long PERIOD_MILLIS = 17;
+    private static final long PERIOD_MILLIS = 16;
     private static final int DEFAULT_LINK_DISTANCE = 20;
     private static final float DEFAULT_LINK_STRENGTH = 0.1f;
     private static final float DEFAULT_CHARGE = -30f;
@@ -26,8 +27,12 @@ class Force {
 
     private ForceListener listener;
 
-    List<FNode> nodes;
-    List<FLink> links;
+    volatile ArrayList<FNode> nodes;
+    volatile ArrayList<FLink> links;
+//    ArrayBlockingQueue<ArrayList<FNode>> nodesCache;
+//    ArrayBlockingQueue<ArrayList<FLink>> linksCache;
+//    Stack<ArrayList<FNode>> nodesCache;
+
 
     private int width;
     private int height;
@@ -45,19 +50,18 @@ class Force {
 
     private float minX, minY, maxX, maxY;
 
+
     Force(ForceListener listener) {
         this.listener = listener;
         handler = new ForceHandler(this, Looper.getMainLooper());
     }
 
-    Force setNodes(List<FNode> nodes) {
-//        this.nodes = Collections.synchronizedList(nodes);
+    Force setNodes(ArrayList<FNode> nodes) {
         this.nodes = nodes;
         return this;
     }
 
-    Force setLinks(List<FLink> links) {
-//        this.links = Collections.synchronizedList(links);
+    Force setLinks(ArrayList<FLink> links) {
         this.links = links;
         return this;
     }
@@ -149,10 +153,13 @@ class Force {
     }
 
     private float getRandomPosition(int max) {
-        return (float) (Math.random() * max);
+//        return (float) (Math.random() * max);
+        return (float) (max * 0.25f + Math.random() * max * 0.5f);
     }
 
     FNode getNode(float x, float y, float scale) {
+        ArrayList<FNode> nodes = this.nodes;
+
         if (nodes == null) {
             return null;
         }
@@ -181,7 +188,10 @@ class Force {
             return;
         }
 
-        int nodeCount = nodes.size();
+        ArrayList<FNode> nodes = this.nodes;
+        ArrayList<FLink> links = this.links;
+
+        final int nodeCount = nodes.size();
         int linkCount = links.size();
 
         for (int i = 0; i < linkCount; i++) {
@@ -220,10 +230,10 @@ class Force {
         }
 
         if (charge != 0) {
-            QuadTree quadTree = getQuadTree(nodes);
+            final QuadTree quadTree = getQuadTree(nodes);
             forceAccumulate(quadTree.root);
             for (int i = 0; i < nodeCount; i++) {
-                FNode node = nodes.get(i);
+                final FNode node = nodes.get(i);
                 if (!node.isStable()) {
                     visitQuadTree(quadTree.root, node, minX, minY, maxX, maxY);
                 }
@@ -288,8 +298,7 @@ class Force {
 
         QuadTree quadTree = new QuadTree();
 
-        int i = -1;
-        while (++i < nodeCount) {
+        for (int i = 0; i < nodeCount; i++) {
             quadTree.insert(quadTree.root, nodes.get(i), minX, minY, maxX, maxY);
         }
 
@@ -343,11 +352,11 @@ class Force {
         return charge * node.getRadius() / level / 5f;
     }
 
-    private boolean repulse(QuadTree.Node root, FNode node, float x1, float x2) {
+    private synchronized boolean repulse(QuadTree.Node root, FNode node, float x1, float y1, float x2, float y2) {
         if (root.point != node) {
             float dx = root.cx - node.x;
             float dy = root.cy - node.y;
-            float dw = x2 - x1;
+            float dw = Math.min((x2 - x1), (y2 - y1));
             float dn = dx * dx + dy * dy;
             if ((dw * dw) / (theta * theta) < dn) {
                 if (dn < Float.POSITIVE_INFINITY) {
@@ -367,7 +376,7 @@ class Force {
     }
 
     private void visitQuadTree(QuadTree.Node root, FNode node, float x1, float y1, float x2, float y2) {
-        if (!repulse(root, node, x1, x2)) {
+        if (!repulse(root, node, x1, y1, x2, y2)) {
             float sx = (x1 + x2) * 0.5f;
             float sy = (y1 + y2) * 0.5f;
             QuadTree.Node[] children = root.children;
@@ -421,6 +430,7 @@ class Force {
             if (force != null) {
                 force.tick();
             }
+
         }
     }
 
@@ -431,5 +441,7 @@ class Force {
 //            tick();
         }
     }
+
+
 
 }
