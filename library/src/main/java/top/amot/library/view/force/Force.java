@@ -27,12 +27,8 @@ class Force {
 
     private ForceListener listener;
 
-    volatile ArrayList<FNode> nodes;
-    volatile ArrayList<FLink> links;
-//    ArrayBlockingQueue<ArrayList<FNode>> nodesCache;
-//    ArrayBlockingQueue<ArrayList<FLink>> linksCache;
-//    Stack<ArrayList<FNode>> nodesCache;
-
+    ArrayList<FNode> nodes;
+    ArrayList<FLink> links;
 
     private int width;
     private int height;
@@ -152,9 +148,23 @@ class Force {
         return setAlpha(DEFAULT_ALPHA);
     }
 
+    /**
+     * 获取随机位置。
+     * @param max 最大 x 或最大 y （如：View 的宽高）
+     * @return
+     */
     private float getRandomPosition(int max) {
-//        return (float) (Math.random() * max);
+        // 如果 max = 720，那么随机位置为 0~720
+        /*return (float) (Math.random() * max);*/
+
+        // 如果 max = 720，那么随机位置为 最大值的 1/4 到 3/4 之间，即 180~540
         return (float) (max * 0.25f + Math.random() * max * 0.5f);
+
+        // 如果 max = 720，那么随机位置为 -360~0 或 720~1080
+        /*float r = (float) Math.random() - 0.5f;
+        return r <= 0
+                ? r * max
+                : (r + 0.5f) * max;*/
     }
 
     FNode getNode(float x, float y, float scale) {
@@ -185,6 +195,7 @@ class Force {
         }
 
         if (nodes == null || links == null) {
+            endTickTask();
             return;
         }
 
@@ -194,6 +205,7 @@ class Force {
         final int nodeCount = nodes.size();
         int linkCount = links.size();
 
+        // 根据 link 两端节点的位置和 link 的拉力，以及节点的重量来更新节点的坐标
         for (int i = 0; i < linkCount; i++) {
             FLink link = links.get(i);
             FNode sourceNode = link.source;
@@ -218,6 +230,7 @@ class Force {
             }
         }
 
+        // 几何约束，使整个图向 View 的中心聚拢
         float k = alpha * gravity;
         if (k != 0) {
             int w = width / 2;
@@ -229,6 +242,7 @@ class Force {
             }
         }
 
+        // 通过电荷量，计算电荷斥力，让节点与节点之间相互排斥
         if (charge != 0) {
             final QuadTree quadTree = getQuadTree(nodes);
             forceAccumulate(quadTree.root);
@@ -258,15 +272,7 @@ class Force {
     }
 
     private float linkStrength(FLink link) {
-        float k = 1;
-        if (link != null) {
-//            int sl = link.source.getLevel();
-//            int tl = link.target.getLevel();
-//            if(sl > 0 && tl > 0) {
-//                    k = (sl + tl) * 0.5f;
-//            }
-        }
-        return strength * k;
+        return strength;
     }
 
     private QuadTree getQuadTree(List<FNode> nodes) {
@@ -356,7 +362,7 @@ class Force {
         if (root.point != node) {
             float dx = root.cx - node.x;
             float dy = root.cy - node.y;
-            float dw = Math.min((x2 - x1), (y2 - y1));
+            float dw = x2 - x1;
             float dn = dx * dx + dy * dy;
             if ((dw * dw) / (theta * theta) < dn) {
                 if (dn < Float.POSITIVE_INFINITY) {

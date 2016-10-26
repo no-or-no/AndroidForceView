@@ -284,7 +284,10 @@ public class ForceView extends View implements ForceListener {
 
         canvas.save();
         canvas.translate(translateX, translateY);
-        canvas.scale(scale, scale, pointerX, pointerY);
+        float tx = (pointerX - translateX) * (1 - scale) / scale;
+        float ty = (pointerY - translateY) * (1 - scale) / scale;
+        canvas.scale(scale, scale);
+        canvas.translate(tx, ty);
 
         drawLinks(canvas, links);
 
@@ -330,7 +333,7 @@ public class ForceView extends View implements ForceListener {
                         y + pointerY * (scale - 1) - translateY,
                         scale);
                 if (node != null) {
-                    strokeColor =  getColor(node.getLevel());
+                    strokeColor = getColor(node.getLevel());
                     strokeColor = Color.argb(128, Color.red(strokeColor), Color.green(strokeColor), Color.blue(strokeColor));
                     ArrayList<FLink> links = force.links;
                     for (int i = 0, size = links.size(); i < size; i++) {
@@ -425,6 +428,8 @@ public class ForceView extends View implements ForceListener {
         public boolean onScale(ScaleGestureDetector detector) {
             scale *= detector.getScaleFactor();
             scale = Math.max(0.1f, Math.min(scale, 5.0f));
+            pointerX = detector.getFocusX();
+            pointerY = detector.getFocusY();
 
             invalidate();
             return true;
@@ -432,8 +437,8 @@ public class ForceView extends View implements ForceListener {
 
         @Override
         public boolean onScaleBegin(ScaleGestureDetector detector) {
-            pointerX = detector.getFocusX();
-            pointerY = detector.getFocusY();
+//            pointerX = detector.getFocusX();
+//            pointerY = detector.getFocusY();
             return !detector.isInProgress();
         }
 

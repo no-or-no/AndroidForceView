@@ -35,9 +35,9 @@ public class MainActivity extends AppCompatActivity {
         fview = (ForceView) findViewById(R.id.fview);
         nodes = new ArrayList<>();
         links = new ArrayList<>();
-        initData();
+//        initData();
 //        initData2();
-//        initData3();
+        initData3();
         fview.setData(nodes, links);
         fview.setOnNodeClickListener(new ForceView.OnNodeClickListener() {
             @Override
