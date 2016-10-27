@@ -2,7 +2,7 @@
 Android力导向图，算法来自于D3.js的v3版本。
 
 效果图：  
-![图片](https://github.com/Amot-zpan/AndroidForceView/blob/master/androidforceview.gif)
+![效果图](https://github.com/Amot-zpan/AndroidForceView/blob/master/art/androidforceview.gif)
 
 详细的力导向图（力布局）的算法，请参阅 [d3-force](https://github.com/d3/d3-force/blob/master/README.md)
 
