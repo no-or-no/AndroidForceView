@@ -20,7 +20,6 @@ import java.util.List;
  * Created by Z.Pan on 2016/10/8.
  */
 public class ForceView extends View implements ForceListener {
-    private static final String TAG = "ForceView";
 
     private static final int[] colors = {
             Color.parseColor("#f09d24"),
@@ -59,11 +58,11 @@ public class ForceView extends View implements ForceListener {
 
     private float touchSlop;
     private float downX, downY;
-    private float pointerX, pointerY;
     private float translateX, translateY;
     private float scale = 1f;
     private float x0, y0;
-    private FNode node, nodeSnapshot;
+    private float padding = 5f;
+    private FNode node;
     private List<FLink> targetLinks = new ArrayList<>();
     private List<FLink> sourceLinks = new ArrayList<>();
     private List<FNode> selectedNodes = new ArrayList<>();
@@ -94,14 +93,14 @@ public class ForceView extends View implements ForceListener {
 
         textPaint.setAntiAlias(true);
         textPaint.setTextAlign(Paint.Align.CENTER);
-        textPaint.setTextSize(dp2px(12));
+        textPaint.setTextSize(dp2px(13));
         textPaint.setColor(Color.BLUE);
 
         linkPaint.setAntiAlias(true);
 
         linkTextPaint.setAntiAlias(true);
-        textPaint.setTextAlign(Paint.Align.CENTER);
-        textPaint.setTextSize(dp2px(10));
+        linkTextPaint.setTextAlign(Paint.Align.CENTER);
+        linkTextPaint.setTextSize(dp2px(13));
 
         scaleDetector = new ScaleGestureDetector(getContext(), new ScaleListener());
         Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
@@ -111,27 +110,44 @@ public class ForceView extends View implements ForceListener {
         linkTextBaseline = (fontMetrics.bottom + fontMetrics.top) * 0.5f;
 
         touchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
-        force = new Force(ForceView.this)
-                .setStrength(0.5f)
-                .setFriction(0.8f)
-                .setDistance(50)
-                .setCharge(-750f)
-                .setGravity(0.1f)
-                .setTheta(1f);
+        force = new Force(ForceView.this);
 
         post(new Runnable() {
             @Override
             public void run() {
-                force.setSize(getWidth(), getHeight())
-                        .setAlpha(0.9f)
+                int w = getWidth();
+                int h = getHeight();
+                force.setSize(w, h)
+                        .setStrength(0.7f)
+                        .setFriction(0.8f)
+                        .setDistance(150)
+                        .setCharge(-320f)
+                        .setGravity(0.1f)
+                        .setTheta(0.8f)
+                        .setAlpha(0.2f)
                         .start();
             }
         });
-
     }
 
     public void setData(ArrayList<FNode> nodes, ArrayList<FLink> links) {
-        force.setNodes(nodes).setLinks(links).start();
+        force.setNodes(nodes)
+                .setLinks(links)
+                .start();
+    }
+
+    private void resetCanvasState() {
+        translateX = 0;
+        translateY = 0;
+        scale = 1;
+    }
+
+    public void setCurrentLevel(int level) {
+        if (force.getCurrentLevel() == level) {
+            return;
+        }
+        resetCanvasState();
+        force.setCurrentLevel(level).start();
     }
 
     private void drawLinks(Canvas canvas, List<FLink> links) {
@@ -204,10 +220,7 @@ public class ForceView extends View implements ForceListener {
             ratio = (float) ((distance - link.target.getRadius() - distance / 5f) / distance);
             float textX = (stopX - startX) * ratio + startX;
             float textY = (stopY - startY) * ratio + startY;
-
-            float v = linkTextPaint.measureText(linkText);
-
-            canvas.drawText(linkText, textX - v / 2f, textY - linkTextBaseline, linkTextPaint);
+            canvas.drawText(linkText, textX, textY - linkTextBaseline, linkTextPaint);
         }
     }
 
@@ -233,14 +246,14 @@ public class ForceView extends View implements ForceListener {
         canvas.drawCircle(cx, cy, node.getRadius(), paint);
 
         String text = node.getText();
-        double w = Math.sqrt(4 * node.getRadius() * node.getRadius() - textHeight * textHeight);
+        double w = Math.sqrt(4 * node.getRadius() * node.getRadius() - textHeight * textHeight) - padding * 2;
         float textWidth = textPaint.measureText(text);
         float n;
         if (w >= textWidth) {
             canvas.drawText(text, cx, cy - textBaseline, textPaint);
         } else {
             float th = textHeight * 2;
-            w = Math.sqrt(4 * node.getRadius() * node.getRadius() - th * th);
+            w = Math.sqrt(4 * node.getRadius() * node.getRadius() - th * th) - padding * 2;
 
             n = (float) w / textWidth;
             int end = (int) (text.length() * n);
@@ -267,30 +280,29 @@ public class ForceView extends View implements ForceListener {
         int color = getColor(level);
         paint.setColor(color);
         textPaint.setColor(Color.WHITE);
-        textPaint.setAlpha(192);
+//        textPaint.setAlpha(192);
         strokePaint.setColor(color);
     }
 
     private int getColor(int level) {
-        return colors[(level - 1) % colors.length];
+        return colors[level % colors.length];
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        ArrayList<FNode> nodes = force.nodes;//Snapshot;
-        ArrayList<FLink> links = force.links;//Snapshot;
+        System.out.println(2);
+
+        ArrayList<FNode> nodes = force.nodes;
+        ArrayList<FLink> links = force.links;
 
         canvas.save();
+
         canvas.translate(translateX, translateY);
-        float tx = (pointerX - translateX) * (1 - scale) / scale;
-        float ty = (pointerY - translateY) * (1 - scale) / scale;
         canvas.scale(scale, scale);
-        canvas.translate(tx, ty);
 
         drawLinks(canvas, links);
-
 
         drawNodes(canvas, nodes, false);
 
@@ -305,9 +317,6 @@ public class ForceView extends View implements ForceListener {
         drawNodes(canvas, selectedNodes, false);
 
         drawNode(canvas, node, true);
-
-//        canvas.drawLine(0, 0, 2000, 0, paint);
-//        canvas.drawLine(0, 0, 0, 3000, paint);
 
         canvas.restore();
 
@@ -329,8 +338,8 @@ public class ForceView extends View implements ForceListener {
                 x0 = downX = x = event.getX();
                 y0 = downY = y = event.getY();
                 node = force.getNode(
-                        x + pointerX * (scale - 1) - translateX,
-                        y + pointerY * (scale - 1) - translateY,
+                        x - translateX,
+                        y - translateY,
                         scale);
                 if (node != null) {
                     strokeColor = getColor(node.getLevel());
@@ -348,27 +357,28 @@ public class ForceView extends View implements ForceListener {
                     }
                     node.setDragState(FNode.DRAG_START);
                     invalidate();
-//                    force.resume();
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
                 pointerIndex = event.findPointerIndex(activePointerId);
                 x = event.getX(pointerIndex);
                 y = event.getY(pointerIndex);
+
                 if (Math.abs((x - x0) * (x - y0)) > touchSlop * touchSlop) {
                     if (node != null) {
-                        node.px = (x + pointerX * (scale - 1) - translateX) / scale;
-                        node.py = (y + pointerY * (scale - 1) - translateY) / scale;
+                        node.px = (x - translateX) / scale;
+                        node.py = (y - translateY) / scale;
                         force.resume();
-//                        invalidate();
                     } else {
-                        translateX += x - downX;
-                        translateY += y - downY;
-                        downX = x;
-                        downY = y;
-                        invalidate();
+                        if (!scaleDetector.isInProgress()) {
+                            translateX += x - downX;
+                            translateY += y - downY;
+                            invalidate();
+                        }
                     }
                 }
+                downX = x;
+                downY = y;
                 break;
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
@@ -392,6 +402,7 @@ public class ForceView extends View implements ForceListener {
             case MotionEvent.ACTION_POINTER_DOWN:
                 node = null;
                 targetLinks.clear();
+                sourceLinks.clear();
                 break;
 
             case MotionEvent.ACTION_POINTER_UP:
@@ -412,38 +423,41 @@ public class ForceView extends View implements ForceListener {
     @Override
     public void refresh() {
         invalidate();
-//        postInvalidate();
-//        postInvalidateDelayed(10);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        force.endTickTask();
+        super.onDetachedFromWindow();
     }
 
     private int dp2px(int dp) {
-        final float scale = getContext().getResources().getDisplayMetrics().density;
+        float scale = getContext().getResources().getDisplayMetrics().density;
         return (int) (dp * scale + 0.5f);
     }
-
-    private boolean isScaling;
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
-            scale *= detector.getScaleFactor();
-            scale = Math.max(0.1f, Math.min(scale, 5.0f));
-            pointerX = detector.getFocusX();
-            pointerY = detector.getFocusY();
+            if (detector.isInProgress()) {
+                float factor = detector.getScaleFactor();
 
-            invalidate();
+                float pScale = scale;
+
+                scale *= factor;
+                scale = Math.max(0.1f, Math.min(scale, 5.0f));
+
+                if (!((pScale == 0.1 && scale == 0.1) || (pScale == 5 && scale == 5))) {
+                    float focusX = detector.getFocusX();
+                    float focusY = detector.getFocusY();
+                    translateX += (focusX - translateX) * (1 - factor);
+                    translateY += (focusY - translateY) * (1 - factor);
+                }
+
+                invalidate();
+            }
+
             return true;
-        }
-
-        @Override
-        public boolean onScaleBegin(ScaleGestureDetector detector) {
-//            pointerX = detector.getFocusX();
-//            pointerY = detector.getFocusY();
-            return !detector.isInProgress();
-        }
-
-        @Override
-        public void onScaleEnd(ScaleGestureDetector detector) {
         }
     }
 

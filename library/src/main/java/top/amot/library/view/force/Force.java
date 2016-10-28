@@ -27,6 +27,9 @@ class Force {
 
     private ForceListener listener;
 
+    private ArrayList<FNode> allNodes;
+    private ArrayList<FLink> allLinks;
+
     ArrayList<FNode> nodes;
     ArrayList<FLink> links;
 
@@ -39,13 +42,13 @@ class Force {
     private float gravity = DEFAULT_GRAVITY;
     private float theta = DEFAULT_THETA;
     private float alpha = DEFAULT_ALPHA;
+    private int currentLevel = Integer.MAX_VALUE;
 
     private ForceHandler handler;
     private Timer timer;
-    private TimerTask task;
+    private TickTask task;
 
     private float minX, minY, maxX, maxY;
-
 
     Force(ForceListener listener) {
         this.listener = listener;
@@ -53,13 +56,50 @@ class Force {
     }
 
     Force setNodes(ArrayList<FNode> nodes) {
-        this.nodes = nodes;
+        allNodes = nodes;
+        resetNodes();
         return this;
     }
 
     Force setLinks(ArrayList<FLink> links) {
-        this.links = links;
+        allLinks = links;
+        resetLinks();
         return this;
+    }
+
+    Force setCurrentLevel(int level) {
+        this.currentLevel = level;
+        resetNodes();
+        resetLinks();
+        return this;
+    }
+
+    int getCurrentLevel() {
+        return currentLevel;
+    }
+
+    private void resetNodes() {
+        nodes = new ArrayList<>();
+        if (allNodes != null) {
+            for (int i = 0; i < allNodes.size(); i++) {
+                FNode node = allNodes.get(i);
+                if (node.getLevel() <= currentLevel) {
+                    nodes.add(node);
+                }
+            }
+        }
+    }
+
+    private void resetLinks() {
+        links = new ArrayList<>();
+        if (allLinks != null) {
+            for (int i = 0; i < allLinks.size(); i++) {
+                FLink link = allLinks.get(i);
+                if (link.source.getLevel() <= currentLevel && link.target.getLevel() <= currentLevel) {
+                    links.add(link);
+                }
+            }
+        }
     }
 
     Force setSize(int width, int height) {
@@ -148,23 +188,13 @@ class Force {
         return setAlpha(DEFAULT_ALPHA);
     }
 
-    /**
-     * 获取随机位置。
-     * @param max 最大 x 或最大 y （如：View 的宽高）
-     * @return
-     */
     private float getRandomPosition(int max) {
-        // 如果 max = 720，那么随机位置为 0~720
-        /*return (float) (Math.random() * max);*/
-
-        // 如果 max = 720，那么随机位置为 最大值的 1/4 到 3/4 之间，即 180~540
-        return (float) (max * 0.25f + Math.random() * max * 0.5f);
-
-        // 如果 max = 720，那么随机位置为 -360~0 或 720~1080
-        /*float r = (float) Math.random() - 0.5f;
-        return r <= 0
+//        return (float) (Math.random() * max);
+//        return (float) (max * 0.25f + Math.random() * max * 0.5f);
+        float r = (float) Math.random() - 0.5f;
+        return (r <= 0
                 ? r * max
-                : (r + 0.5f) * max;*/
+                : (r + 0.5f) * max) * 2;
     }
 
     FNode getNode(float x, float y, float scale) {
@@ -190,12 +220,14 @@ class Force {
 
     private void tick() {
         if ((alpha *= 0.99) < 0.005) {
-            endTickTask();
+            //endTickTask();
+            pauseTask();
             return;
         }
 
         if (nodes == null || links == null) {
-            endTickTask();
+//            endTickTask();
+            pauseTask();
             return;
         }
 
@@ -205,7 +237,6 @@ class Force {
         final int nodeCount = nodes.size();
         int linkCount = links.size();
 
-        // 根据 link 两端节点的位置和 link 的拉力，以及节点的重量来更新节点的坐标
         for (int i = 0; i < linkCount; i++) {
             FLink link = links.get(i);
             FNode sourceNode = link.source;
@@ -230,7 +261,6 @@ class Force {
             }
         }
 
-        // 几何约束，使整个图向 View 的中心聚拢
         float k = alpha * gravity;
         if (k != 0) {
             int w = width / 2;
@@ -242,7 +272,6 @@ class Force {
             }
         }
 
-        // 通过电荷量，计算电荷斥力，让节点与节点之间相互排斥
         if (charge != 0) {
             final QuadTree quadTree = getQuadTree(nodes);
             forceAccumulate(quadTree.root);
@@ -265,6 +294,21 @@ class Force {
             }
         }
 
+//        for (int i = 0; i < nodeCount; i++) {
+//            FNode node = nodes.get(i);
+//            if (node.immobile) {
+//                if (!node.isStable()) {
+//                    node.x = width / 2f;
+//                    node.y = height / 2f;
+//                }
+//                break;
+//            }
+//        }
+//        if (rootNode != null && rootNode.immobile && !rootNode.isStable()) {
+//            rootNode.x = width / 2f;
+//            rootNode.y = height / 2f;
+//        }
+
         if (listener != null) {
             listener.refresh();
         }
@@ -272,7 +316,15 @@ class Force {
     }
 
     private float linkStrength(FLink link) {
-        return strength;
+        float k = 1;
+        if (link != null) {
+//            int sl = link.source.getLevel();
+//            int tl = link.target.getLevel();
+//            if(sl > 0 && tl > 0) {
+//                    k = (sl + tl) * 0.5f;
+//            }
+        }
+        return strength * k;
     }
 
     private QuadTree getQuadTree(List<FNode> nodes) {
@@ -352,10 +404,7 @@ class Force {
             return charge;
         }
         int level = node.getLevel();
-        if (level <= 1) {
-            return charge;
-        }
-        return charge * node.getRadius() / level / 5f;
+        return charge * node.getRadius() * (10 - level) / 20f;
     }
 
     private synchronized boolean repulse(QuadTree.Node root, FNode node, float x1, float y1, float x2, float y2) {
@@ -402,15 +451,23 @@ class Force {
     }
 
     private void startTickTask() {
-        if (timer == null || task == null) {
+        if (timer != null && task != null) {
+            task.resume();
+        } else {
             /* execute tick() method once per PERIOD_MILLIS ms. */
             timer = new Timer(true);
             task = new TickTask();
-            timer.schedule(task, 0, PERIOD_MILLIS);
+            timer.schedule(task, 350, PERIOD_MILLIS);
         }
     }
 
-    private void endTickTask() {
+    private void pauseTask() {
+        if (task != null) {
+            task.pause();
+        }
+    }
+
+    void endTickTask() {
         if (timer != null) {
             timer.cancel();
             timer = null;
@@ -429,25 +486,49 @@ class Force {
             forceReference = new WeakReference<Force>(force);
         }
 
-
         @Override
         public void handleMessage(Message msg) {
             Force force = forceReference.get();
             if (force != null) {
                 force.tick();
             }
-
         }
     }
 
     private class TickTask extends TimerTask {
+
+        private volatile int pause;
+        private volatile int isLocked;
+
         @Override
         public void run() {
-            handler.sendEmptyMessage(0);
-//            tick();
+            if (pause == 0) {
+                handler.sendEmptyMessage(0);
+            } else {
+                try {
+                    synchronized (this) {
+                        isLocked = 1;
+                        wait();
+                    }
+                } catch (InterruptedException e) {
+                }
+            }
         }
+
+        void pause() {
+            pause |= 1;
+        }
+
+        void resume() {
+            pause &= 0;
+            synchronized (this) {
+                if (isLocked == 1) {
+                    isLocked = 0;
+                    notify();
+                }
+            }
+        }
+
     }
-
-
 
 }

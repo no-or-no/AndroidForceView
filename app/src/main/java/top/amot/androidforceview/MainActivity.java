@@ -2,6 +2,7 @@ package top.amot.androidforceview;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.SparseArray;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ public class MainActivity extends AppCompatActivity {
     ForceView fview;
     private ArrayList<FNode> nodes;
     private ArrayList<FLink> links;
-
+    private SparseArray<FNode> nodeMap;
     private Toast toast;
 
     private void show(String text) {
@@ -48,15 +49,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initData3() {
-        nodes.add(new FNode("0", 50f, 1));
+        nodes.add(new FNode("0", dp2px(30), 0));
         for (int i = 1; i <= 20; i++) {
-            nodes.add(new FNode("" + i, 50f, 2));
+            nodes.add(new FNode("" + i, dp2px(30), 1));
         }
         for (int i = 1; i <= 20; i++) {
             FLink link = new FLink(nodes.get(0), nodes.get(i));
             link.setText("0-" + i);
             links.add(link);
         }
+        for (int i = 21; i <= 25; i++) {
+            nodes.add(new FNode("" + i, dp2px(30), 2));
+        }
+        for (int i = 26; i <= 35; i++) {
+            nodes.add(new FNode("" + i, dp2px(30), 3));
+        }
+        for (int i = 36; i <= 50; i++) {
+            nodes.add(new FNode("" + i, dp2px(30), 4));
+        }
+
+        addLink3(7, 8, 8);
+        addLink3(9, 24, 28);
+        addLink3(10, 25, 26);
+        addLink3(7, 21, 25);
+        addLink3(8, 24, 26);
+        addLink3(23, 26, 35);
+        addLink3(26, 26, 35);
+        addLink3(30, 36, 50);
+
     }
 
     private void initData2() {
@@ -71,109 +91,87 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initData() {
+        nodeMap = new SparseArray<>();
 
-        nodes.add(new FNode("0", 50f, 1));
-        for (int i = 1; i <= 10; i++) {
-            nodes.add(new FNode("" + i, 50f, 2));
-        }
+        FNode rootNode = new FNode("根节点0", dp2px(35), 0);
+        nodeMap.put(0, rootNode);
+        nodes.add(rootNode);
 
-        for (int i = 1; i <= 10; i++) {
-            FLink link = new FLink(nodes.get(0), nodes.get(i));
-            link.setText("0-" + i);
+        int r = dp2px(30);
+        for (int i = 1; i <= 50; i++) {
+            FNode node = new FNode("节点-" + i, r, 1);
+            nodeMap.put(i, node);
+            nodes.add(node);
+
+            FLink link = new FLink(rootNode, node);
+            link.setText("关系-0-" + i);
             links.add(link);
             if (i % 3 == 0) {
-                FLink link2 = new FLink(nodes.get(i), nodes.get(0));
-                link2.setText(i + "-0");
-                links.add(link2);
+                FLink link1 = new FLink(node, rootNode);
+                link1.setText("关系-" + i + "-0");
+                links.add(link1);
             }
         }
 
-        FNode node0 = nodes.get(0);
-        FNode node1 = nodes.get(1);
-        FNode node2 = nodes.get(2);
-        FNode node3 = nodes.get(3);
-        FNode node4 = nodes.get(4);
-        for (int i = 1; i <= 10; i++) {
-            FNode node = new FNode("0-" + i, 50f, 2);
+        for (int i = 51; i <= 200; i++) {
+            FNode node = new FNode("" + i, r, 2);
+            nodeMap.put(i, node);
             nodes.add(node);
-            links.add(new FLink(node0, node));
         }
 
-        FLink fLink = new FLink(node2, node4);
-        fLink.setText("相关节点");
-        links.add(fLink);
-        fLink = new FLink(node4, node2);
-        fLink.setText("包含关系");
-        links.add(fLink);
+        addLink(15, 51, 60);
+        addLink(23, 60, 80);
+        addLink(24, 81, 103);
+        addLink(41, 104, 109);
+        addLink(44, 110, 130);
+        addLink(50, 125, 200);
 
-        for (int i = 1; i <= 3; i++) {
-            FNode node = new FNode("1-" + i, 50f, 3);
+
+        for (int i = 201; i <= 240; i++) {
+            FNode node = new FNode("" + i, r, 3);
+            nodeMap.put(i, node);
             nodes.add(node);
-            links.add(new FLink(node1, node));
         }
-        for (int i = 1; i <= 4; i++) {
-            FNode node = new FNode("2-" + i, 50f, 3);
+        for (int i = 241; i <= 300; i++) {
+            FNode node = new FNode("" + i, r, 4);
+            nodeMap.put(i, node);
             nodes.add(node);
-            links.add(new FLink(node2, node));
         }
 
-        FNode node2_x1 = nodes.get(nodes.size() - 1);
-        FNode node2_x2 = nodes.get(nodes.size() - 2);
-        FNode node2_x3 = nodes.get(nodes.size() - 3);
-        for (int i = 1; i <= 5; i++) {
-            FNode node_1 = new FNode(node2_x1.getText() + "-" + i, 50f, 4);
-            FNode node_2 = new FNode(node2_x2.getText() + "-" + i, 50f, 4);
-            FNode node_3 = new FNode(node2_x3.getText() + "-" + i, 50f, 4);
-            nodes.add(node_1);
-            nodes.add(node_2);
-            nodes.add(node_3);
-            links.add(new FLink(node2_x1, node_1));
-            links.add(new FLink(node2_x2, node_2));
-            links.add(new FLink(node2_x3, node_3));
+        addLink(137, 201, 220);
+        addLink(50, 201, 220);
+        addLink(144, 145, 145);
+        addLink(145, 201, 220);
+        addLink(151, 221, 300);
+        addLink(205, 221, 230);
+        addLink(37, 241, 260);
+        addLink(121, 249, 270);
+        addLink(23, 268, 275);
+        addLink(249, 275, 300);
+
+
+
+    }
+
+    private void addLink(int n, int start, int end) {
+        FNode n1 = nodeMap.get(n);
+        for (; start <= end; start++) {
+            FLink link = new FLink(n1, nodeMap.get(start));
+            link.setText(n + "-" + start);
+            links.add(link);
         }
-
-        for (int i = 1; i <= 10; i++) {
-            FNode node = new FNode("3-" + i, 50f, 3);
-            nodes.add(node);
-            links.add(new FLink(node3, node));
+    }
+    private void addLink3(int n, int start, int end) {
+        FNode n1 = nodes.get(n);
+        for (; start <= end; start++) {
+            FLink link = new FLink(n1, nodes.get(start));
+            link.setText(n + "-" + start);
+            links.add(link);
         }
+    }
 
-        FNode node3_x1 = nodes.get(nodes.size() - 1);
-        FNode node3_x2 = nodes.get(nodes.size() - 2);
-        FNode node3_x3 = nodes.get(nodes.size() - 3);
-        for (int i = 1; i <= 6; i++) {
-            FNode node_1 = new FNode(node3_x1.getText() + "-" + i, 50f, 4);
-            FNode node_2 = new FNode(node3_x2.getText() + "-" + i, 50f, 4);
-            FNode node_3 = new FNode(node3_x3.getText() + "-" + i, 50f, 4);
-            nodes.add(node_1);
-            nodes.add(node_2);
-            nodes.add(node_3);
-            links.add(new FLink(node3_x1, node_1));
-            links.add(new FLink(node3_x2, node_2));
-            links.add(new FLink(node3_x3, node_3));
-        }
-
-        for (int i = 1; i <= 8; i++) {
-            FNode node = new FNode("4-" + i, 50f, 3);
-            nodes.add(node);
-            links.add(new FLink(node4, node));
-        }
-
-        FNode node4_x = nodes.get(nodes.size() - 1);
-        for (int i = 1; i <= 6; i++) {
-            FNode node = new FNode(node4_x.getText() + "-" + i, 50f, 4);
-            nodes.add(node);
-            links.add(new FLink(node4_x, node));
-        }
-
-        FNode node5_x = nodes.get(nodes.size() - 1);
-        for (int i = 1; i <= 5; i++) {
-            FNode node = new FNode(node5_x.getText() + "-aaabc" + i, 50f, 5);
-            nodes.add(node);
-            links.add(new FLink(node5_x, node));
-        }
-
-
-
+    public int dp2px(float dipValue) {
+        float scale = getResources().getDisplayMetrics().density;
+        return (int) (dipValue * scale + 0.5f);
     }
 }
