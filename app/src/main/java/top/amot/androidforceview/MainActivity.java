@@ -9,11 +9,13 @@ import java.util.ArrayList;
 
 import top.amot.library.view.force.FLink;
 import top.amot.library.view.force.FNode;
+import top.amot.library.view.force.ForceSurfaceView;
 import top.amot.library.view.force.ForceView;
 
 public class MainActivity extends AppCompatActivity {
 
     ForceView fview;
+    ForceSurfaceView fsView;
     private ArrayList<FNode> nodes;
     private ArrayList<FLink> links;
     private SparseArray<FNode> nodeMap;
@@ -33,19 +35,24 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        fview = (ForceView) findViewById(R.id.fview);
         nodes = new ArrayList<>();
         links = new ArrayList<>();
-//        initData();
+        initData();
 //        initData2();
-        initData3();
+//        initData3();
+
+        /*fview = (ForceView) findViewById(R.id.fview);
         fview.setData(nodes, links);
-        fview.setOnNodeClickListener(new ForceView.OnNodeClickListener() {
+        fview.setOnNodeClickListener(new OnNodeClickListener() {
             @Override
             public void onNodeClick(FNode node) {
                 show(node.getText());
             }
-        });
+        });*/
+
+        fsView = (ForceSurfaceView) findViewById(R.id.fsview);
+        fsView.setData(nodes, links);
+
     }
 
     private void initData3() {
@@ -132,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
             nodeMap.put(i, node);
             nodes.add(node);
         }
-        for (int i = 241; i <= 300; i++) {
+        for (int i = 241; i <= 600; i++) {
             FNode node = new FNode("" + i, r, 4);
             nodeMap.put(i, node);
             nodes.add(node);
@@ -147,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
         addLink(37, 241, 260);
         addLink(121, 249, 270);
         addLink(23, 268, 275);
-        addLink(249, 275, 300);
+        addLink(249, 275, 600);
 
 
 

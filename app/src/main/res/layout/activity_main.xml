@@ -6,8 +6,13 @@
     android:layout_height="match_parent"
     tools:context="top.amot.androidforceview.MainActivity">
 
-    <top.amot.library.view.force.ForceView
+    <!--<top.amot.library.view.force.ForceView
         android:id="@+id/fview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />-->
+
+    <top.amot.library.view.force.ForceSurfaceView
+        android:id="@+id/fsview"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 </RelativeLayout>

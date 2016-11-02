@@ -16,7 +16,7 @@ import java.util.TimerTask;
 
 class Force {
 
-    private static final long PERIOD_MILLIS = 16;
+    private static final long PERIOD_MILLIS = 15;
     private static final int DEFAULT_LINK_DISTANCE = 20;
     private static final float DEFAULT_LINK_STRENGTH = 0.1f;
     private static final float DEFAULT_CHARGE = -30f;
@@ -49,6 +49,7 @@ class Force {
     private TickTask task;
 
     private float minX, minY, maxX, maxY;
+    boolean isStable;
 
     Force(ForceListener listener) {
         this.listener = listener;
@@ -180,10 +181,6 @@ class Force {
         return resume();
     }
 
-    Force stop() {
-        return setAlpha(0);
-    }
-
     Force resume() {
         return setAlpha(DEFAULT_ALPHA);
     }
@@ -218,18 +215,20 @@ class Force {
         return distance + link.source.getRadius() + link.target.getRadius();
     }
 
-    private void tick() {
+    void tick() {
         if ((alpha *= 0.99) < 0.005) {
-            //endTickTask();
             pauseTask();
+            isStable = true;
             return;
         }
 
         if (nodes == null || links == null) {
-//            endTickTask();
             pauseTask();
+            isStable = true;
             return;
         }
+
+        isStable = false;
 
         ArrayList<FNode> nodes = this.nodes;
         ArrayList<FLink> links = this.links;
@@ -292,22 +291,9 @@ class Force {
                 node.x -= (node.px - (node.px = node.x)) * friction;
                 node.y -= (node.py - (node.py = node.y)) * friction;
             }
+            node.snapshotX = node.x;
+            node.snapshotY = node.y;
         }
-
-//        for (int i = 0; i < nodeCount; i++) {
-//            FNode node = nodes.get(i);
-//            if (node.immobile) {
-//                if (!node.isStable()) {
-//                    node.x = width / 2f;
-//                    node.y = height / 2f;
-//                }
-//                break;
-//            }
-//        }
-//        if (rootNode != null && rootNode.immobile && !rootNode.isStable()) {
-//            rootNode.x = width / 2f;
-//            rootNode.y = height / 2f;
-//        }
 
         if (listener != null) {
             listener.refresh();
@@ -461,9 +447,15 @@ class Force {
         }
     }
 
-    private void pauseTask() {
+    void pauseTask() {
         if (task != null) {
             task.pause();
+        }
+    }
+
+    void resumeTask() {
+        if (task != null) {
+            task.resume();
         }
     }
 
@@ -503,7 +495,8 @@ class Force {
         @Override
         public void run() {
             if (pause == 0) {
-                handler.sendEmptyMessage(0);
+//                handler.sendEmptyMessage(0);
+                tick();
             } else {
                 try {
                     synchronized (this) {

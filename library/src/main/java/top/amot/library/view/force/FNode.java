@@ -25,12 +25,19 @@ public class FNode {
     private Object obj;    // 用来携带其他数据，如：该节点对应的数据实体 Bean，或数据库中的 _id
     private int    level;  // 级别
 
+    float snapshotX, snapshotY;
     float x, y;    // 当前坐标
     float px, py;  // 前一个状态的坐标
     int weight;    // 根据子节点自动计算，weight 越大，该节点越不容易被拖动
 
     private float radius = 50f; // 节点半径
     private short state;        // 节点状态，该状态决定了是否处于稳定状态
+
+    volatile int selected;
+
+    boolean isSelected() {
+        return selected == 1;
+    }
 
     public FNode(String text) {
         this(text, 50f, ROOT_NODE_LEVEL);

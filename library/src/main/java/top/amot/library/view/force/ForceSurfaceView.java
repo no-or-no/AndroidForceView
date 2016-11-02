@@ -2,21 +2,45 @@ package top.amot.library.view.force;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import android.view.View;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.ViewConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Force layout from D3.js
+ * SurfaceView-based implement of Force layout.
  * <p>
- * Created by Z.Pan on 2016/10/8.
+ * Created by Z.pan on 2016/11/2.
  */
-public class ForceView extends View implements ForceListener {
+public class ForceSurfaceView extends SurfaceView implements SurfaceHolder.Callback, Handler.Callback, ForceListener {
+
+    private final SurfaceHolder holder;
+    private HandlerThread thread;
+    private Handler handler;
+    private Force force;
+    private ForceDrawer drawer;
+    private ScaleGestureDetector scaleDetector;
+
+    private List<FLink> targetLinks = new ArrayList<>();
+    private List<FLink> sourceLinks = new ArrayList<>();
+    private List<FNode> selectedNodes = new ArrayList<>();
+    private FNode node;
+
+    private float touchSlop;
+    private float translateX, translateY;
+    private float scale = 1f;
+    private int activePointerId = -1;
+    private float x0, y0;
+    private float downX, downY;
 
     private OnNodeClickListener onNodeClickListener;
 
@@ -28,56 +52,24 @@ public class ForceView extends View implements ForceListener {
         this.onNodeClickListener = onNodeClickListener;
     }
 
-    private Force force;
-    private ForceDrawer drawer;
-
-    private float touchSlop;
-    private float downX, downY;
-    private float translateX, translateY;
-    private float scale = 1f;
-    private float x0, y0;
-    private FNode node;
-    private List<FLink> targetLinks = new ArrayList<>();
-    private List<FLink> sourceLinks = new ArrayList<>();
-    private List<FNode> selectedNodes = new ArrayList<>();
-    private ScaleGestureDetector scaleDetector;
-
-    public ForceView(Context context) {
+    public ForceSurfaceView(Context context) {
         this(context, null);
     }
 
-    public ForceView(Context context, AttributeSet attrs) {
+    public ForceSurfaceView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public ForceView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public ForceSurfaceView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
-    }
 
-    private void init() {
-        scaleDetector = new ScaleGestureDetector(getContext(), new ScaleListener());
+        holder = getHolder();
+        holder.addCallback(this);
+        force = new Force(this);
+        drawer = new ForceDrawer(context);
+        scaleDetector = new ScaleGestureDetector(context, new ScaleListener());
         touchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
 
-        force = new Force(this);
-        drawer = new ForceDrawer(getContext());
-
-        post(new Runnable() {
-            @Override
-            public void run() {
-                int w = getWidth();
-                int h = getHeight();
-                force.setSize(w, h)
-                        .setStrength(0.7f)
-                        .setFriction(0.8f)
-                        .setDistance(150)
-                        .setCharge(-320f)
-                        .setGravity(0.1f)
-                        .setTheta(0.8f)
-                        .setAlpha(0.2f)
-                        .start();
-            }
-        });
     }
 
     public void setData(ArrayList<FNode> nodes, ArrayList<FLink> links) {
@@ -86,24 +78,8 @@ public class ForceView extends View implements ForceListener {
                 .start();
     }
 
-    private void resetCanvasState() {
-        translateX = 0;
-        translateY = 0;
-        scale = 1;
-    }
-
-    public void setCurrentLevel(int level) {
-        if (force.getCurrentLevel() == level) {
-            return;
-        }
-        resetCanvasState();
-        force.setCurrentLevel(level).start();
-    }
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-
+    /** 绘图，非 UI 线程 */
+    private void doDraw(Canvas canvas) {
         ArrayList<FNode> nodes = force.nodes;
         ArrayList<FLink> links = force.links;
 
@@ -124,10 +100,7 @@ public class ForceView extends View implements ForceListener {
         drawer.drawNode(canvas, node, true);
 
         canvas.restore();
-
     }
-
-    private int activePointerId = -1;
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -147,6 +120,8 @@ public class ForceView extends View implements ForceListener {
                         y - translateY,
                         scale);
                 if (node != null) {
+                    node.selected = 1;
+                    node.setDragState(FNode.DRAG_START);
                     ArrayList<FLink> links = force.links;
                     for (int i = 0, size = links.size(); i < size; i++) {
                         FLink link = links.get(i);
@@ -158,8 +133,7 @@ public class ForceView extends View implements ForceListener {
                             sourceLinks.add(link);
                         }
                     }
-                    node.setDragState(FNode.DRAG_START);
-                    invalidate();
+                    refresh();
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -169,14 +143,14 @@ public class ForceView extends View implements ForceListener {
 
                 if (Math.abs((x - x0) * (x - y0)) > touchSlop * touchSlop) {
                     if (node != null) {
-                        node.px = (x - translateX) / scale;
-                        node.py = (y - translateY) / scale;
+                        node.x = node.px = (x - translateX) / scale;
+                        node.y = node.py = (y - translateY) / scale;
                         force.resume();
                     } else {
                         if (!scaleDetector.isInProgress()) {
                             translateX += x - downX;
                             translateY += y - downY;
-                            invalidate();
+                            refresh();
                         }
                     }
                 }
@@ -187,8 +161,9 @@ public class ForceView extends View implements ForceListener {
             case MotionEvent.ACTION_UP:
                 activePointerId = -1;
                 if (node != null) {
+                    node.selected = 0;
                     node.setDragState(FNode.DRAG_END);
-                    invalidate();
+                    refresh();
                     x = event.getX();
                     y = event.getY();
                     if (Math.abs((x - x0) * (y - y0)) < touchSlop * touchSlop) {
@@ -222,22 +197,57 @@ public class ForceView extends View implements ForceListener {
         }
         return true;
     }
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        int w = getWidth();
+        int h = getHeight();
+        force.setSize(w, h)
+                .setStrength(0.7f)
+                .setFriction(0.6f)
+                .setDistance(150)
+                .setCharge(-320f)
+                .setGravity(0.1f)
+                .setTheta(0.8f)
+                .setAlpha(0.2f)
+                .start();
+        thread = new HandlerThread("ForceSurfaceThread");
+        thread.start();
+        handler = new Handler(thread.getLooper(), this);
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        // no op
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        force.endTickTask();
+        thread.quit();
+        thread = null;
+    }
+
+    @Override
+    public boolean handleMessage(Message msg) {
+        Canvas canvas = null;
+        try {
+            synchronized (holder) {
+                canvas = holder.lockCanvas();
+                canvas.drawColor(Color.WHITE);
+                doDraw(canvas);
+            }
+        } catch (Exception e) {
+        } finally {
+            if (canvas != null) {
+                holder.unlockCanvasAndPost(canvas);
+            }
+        }
+        return true;
+    }
 
     @Override
     public void refresh() {
-        invalidate();
-//        postInvalidate();
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        force.endTickTask();
-        super.onDetachedFromWindow();
-    }
-
-    private int dp2px(int dp) {
-        float scale = getContext().getResources().getDisplayMetrics().density;
-        return (int) (dp * scale + 0.5f);
+        handler.sendEmptyMessage(0);
     }
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
@@ -258,11 +268,10 @@ public class ForceView extends View implements ForceListener {
                     translateY += (focusY - translateY) * (1 - factor);
                 }
 
-                invalidate();
+                refresh();
             }
 
             return true;
         }
     }
-
 }
