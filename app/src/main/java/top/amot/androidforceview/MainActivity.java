@@ -37,9 +37,9 @@ public class MainActivity extends AppCompatActivity {
 
         nodes = new ArrayList<>();
         links = new ArrayList<>();
-        initData();
+//        initData();
 //        initData2();
-//        initData3();
+        initData3();
 
         /*fview = (ForceView) findViewById(R.id.fview);
         fview.setData(nodes, links);
