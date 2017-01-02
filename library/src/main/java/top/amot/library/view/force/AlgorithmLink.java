@@ -91,6 +91,6 @@ class AlgorithmLink implements ForceAlgorithm {
     }
 
     private float getDistance(Link link) {
-        return 30f;
+        return 300f;
     }
 }

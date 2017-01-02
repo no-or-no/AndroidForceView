@@ -1,7 +1,6 @@
 package top.amot.library.view.force;
 
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import java.util.ArrayDeque;
 import java.util.List;
@@ -53,7 +52,7 @@ class AlgorithmManyBody implements ForceAlgorithm {
     private QuadTree quadTree(List<Node> nodes) {
         QuadTree quadTree = new QuadTree(0, 0, Float.NaN, Float.NaN, Float.NaN, Float.NaN);
         if (nodes != null && !nodes.isEmpty()) {
-//            quadTree.addAll(nodes);
+            quadTree.addAll(nodes);
         }
         return quadTree;
     }
@@ -76,13 +75,15 @@ class AlgorithmManyBody implements ForceAlgorithm {
 
         void add(Node node) {
             // ignore invalid points
-            if (node == null || Float.isNaN(node.x) || Float.isNaN(node.y)) {
+            if (node == null) {
                 return;
             }
 
+            Quad leaf = new Quad(node);
+
             // If the tree is empty, initialize the root as a leaf.
             if (root == null) {
-                root = new Quad(node);
+                root = leaf;
                 return;
             }
 
@@ -92,10 +93,10 @@ class AlgorithmManyBody implements ForceAlgorithm {
             float y1 = this.y1;
 
             // Find the existing leaf for the new point, or add it.
-            Quad tNode = root;
-            Quad parent = null;
+            Quad quad = root;
+            Quad[] parent = null;
             int i = 0;
-            while (tNode.children != null) {
+            while (quad.children != null) {
                 float xm = (x0 + x1) / 2;
                 float ym = (y0 + y1) / 2;
 
@@ -115,43 +116,38 @@ class AlgorithmManyBody implements ForceAlgorithm {
                     y1 = ym;
                 }
 
-                parent = tNode;
+                parent = quad.children;
                 i = isBottom << 1 | isRight;
-                tNode = tNode.children[i];
-                if (tNode == null) {
-                    parent.children[i] = new Quad(node);
+                quad = quad.children[i];
+                if (quad == null) {
+                    parent[i] = leaf;
                     return;
                 }
             }
 
             // Is the new point is exactly coincident with the existing point?
-            float xp = tNode.data.x;
-            float yp = tNode.data.y;
-            Quad leaf = null;
+            float xp = quad.data.x;
+            float yp = quad.data.y;
             if (node.x == xp && node.y == yp) {
-                leaf = new Quad(node);
-                leaf.next = tNode;
+                leaf.next = quad;
                 if (parent != null) {
-                    parent.children[i] = leaf;
+                    parent[i] = leaf;
+                } else {
                     root = leaf;
-                    return;
                 }
+                return;
             }
 
             // Otherwise, split the leaf node until the old and new point are separated.
             int isRight, isBottom, j;
             do {
                 if (parent != null) {
-                    if (parent.children != null) {
-                        parent.children[i] = new Quad(node);
-                        parent.children[i].children = new Quad[4];
-                        parent = parent.children[i];
-                    } else {
-                        parent.children = new Quad[4];
-                    }
+                    parent[i] = new Quad();
+                    parent[i].children = new Quad[4];
+                    parent = parent[i].children;
                 } else {
                     root.children = new Quad[4];
-                    parent = root;
+                    parent = root.children;
                 }
 
                 float xm = (x0 + x1) / 2;
@@ -175,8 +171,8 @@ class AlgorithmManyBody implements ForceAlgorithm {
                 i = isBottom << 1 | isRight;
                 j = (yp >= ym ? 1 : 0) << 1 | (xp >= xm ? 1 : 0);
             } while (i == j);
-            parent.children[j] = tNode;
-            parent.children[i] = leaf;
+            parent[j] = new Quad(quad.data);
+            parent[i] = leaf;
         }
 
         void addAll(List<Node> nodes) {
@@ -194,7 +190,7 @@ class AlgorithmManyBody implements ForceAlgorithm {
                 float x = node.x;
                 float y = node.y;
 
-                if (Float.isNaN(x) || Float.isNaN(y)) {
+                if (x == 0 || y == 0) {
                     continue;
                 }
 
@@ -234,12 +230,15 @@ class AlgorithmManyBody implements ForceAlgorithm {
                 int isLeft = (x < (x0 + x1) / 2) ? 1 : 0;
                 int i = isTop << 1 | isLeft;
 
-                Quad[] children = null;
+                Quad quad = root;
+                Quad[] parent = null;
                 switch (i) {
                     case 0:
                         do {
-                            children = new Quad[4];
-                            children[i] = root;
+                            parent = new Quad[4];
+                            parent[i] = quad;
+                            quad = new Quad();
+                            quad.children = parent;
 
                             z *= 2;
                             x1 = x0 + z;
@@ -248,8 +247,10 @@ class AlgorithmManyBody implements ForceAlgorithm {
                         break;
                     case 1:
                         do {
-                            children = new Quad[4];
-                            children[i] = root;
+                            parent = new Quad[4];
+                            parent[i] = quad;
+                            quad = new Quad();
+                            quad.children = parent;
 
                             z *= 2;
                             x0 = x1 - z;
@@ -258,8 +259,10 @@ class AlgorithmManyBody implements ForceAlgorithm {
                         break;
                     case 2:
                         do {
-                            children = new Quad[4];
-                            children[i] = root;
+                            parent = new Quad[4];
+                            parent[i] = quad;
+                            quad = new Quad();
+                            quad.children = parent;
 
                             z *= 2;
                             x1 = x0 + z;
@@ -268,8 +271,10 @@ class AlgorithmManyBody implements ForceAlgorithm {
                         break;
                     case 3:
                         do {
-                            children = new Quad[4];
-                            children[i] = root;
+                            parent = new Quad[4];
+                            parent[i] = quad;
+                            quad = new Quad();
+                            quad.children = parent;
 
                             z *= 2;
                             x0 = x1 - z;
@@ -279,7 +284,7 @@ class AlgorithmManyBody implements ForceAlgorithm {
                 }
 
                 if (root != null) {
-                    root.children = children;
+                    root = quad;
                 }
             }
         }
@@ -311,7 +316,7 @@ class AlgorithmManyBody implements ForceAlgorithm {
                         stack.push(child.xy(xm, ym, x1, y1));
                     }
                 }
-                Log.e("TAG", "push");
+//                Log.e("TAG", "push");
                 next.push(q);
             }
             while (!next.isEmpty()) {
@@ -419,7 +424,7 @@ class AlgorithmManyBody implements ForceAlgorithm {
             }
 
             do {
-                if (q.data != node) {
+                if (q.data != node && q.data != null) {
                     w = strengths[q.data.index] * alpha / l;
                     node.vx += x$$1 * w;
                     node.vy += y$$1 * w;
@@ -439,6 +444,9 @@ class AlgorithmManyBody implements ForceAlgorithm {
         float x0, y0;
         float x1, y1;
         int strength;
+
+        Quad () {
+        }
 
         Quad(Node data) {
             this.data = data;

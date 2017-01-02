@@ -50,20 +50,20 @@ public class MainActivity extends AppCompatActivity {
 
         nodes.add(new Node("A", 0));
         nodes.add(new Node("B", 1));
-//        nodes.add(new Node("C", 1));
-//        nodes.add(new Node("D", 1));
-//        nodes.add(new Node("E", 1));
-//        nodes.add(new Node("F", 2));
+        nodes.add(new Node("C", 1));
+        nodes.add(new Node("D", 1));
+        nodes.add(new Node("E", 1));
+        nodes.add(new Node("F", 2));
     }
 
     private void initLinks() {
         links = new ArrayList<>();
 
-//        links.add(new Link(nodes.get(0), nodes.get(1), "A-B"));
-//        links.add(new Link(nodes.get(0), nodes.get(2), "A-C"));
-//        links.add(new Link(nodes.get(0), nodes.get(3), "A-D"));
-//        links.add(new Link(nodes.get(0), nodes.get(4), "A-E"));
-//        links.add(new Link(nodes.get(4), nodes.get(5), "E-F"));
+        links.add(new Link(nodes.get(0), nodes.get(1), "A-B"));
+        links.add(new Link(nodes.get(0), nodes.get(2), "A-C"));
+        links.add(new Link(nodes.get(0), nodes.get(3), "A-D"));
+        links.add(new Link(nodes.get(0), nodes.get(4), "A-E"));
+        links.add(new Link(nodes.get(4), nodes.get(5), "E-F"));
     }
 
     private void show(String text) {

@@ -1,7 +1,5 @@
 package top.amot.library.view.force;
 
-import android.util.Log;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Timer;
@@ -134,15 +132,11 @@ public final class Simulation {
         for (int i = 0; i < nodes.size(); i++) {
             Node node = nodes.get(i);
             node.index = i;
-            //if (Float.isNaN(node.x) || Float.isNaN(node.y)) {
             if (node.x == 0 || node.y == 0) {
                 float radius = (float) (initialRadius * Math.sqrt(i));
                 float angle = i * initialAngle;
                 node.x = (float) (radius * Math.cos(angle));
                 node.y = (float) (radius * Math.sin(angle));
-            }
-            if (Float.isNaN(node.vx) || Float.isNaN(node.vy)) {
-                node.vx = node.vy = 0;
             }
         }
     }
