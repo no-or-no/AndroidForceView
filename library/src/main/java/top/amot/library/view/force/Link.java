@@ -1,18 +1,23 @@
 package top.amot.library.view.force;
 
 /**
- * Created by Z.Pan on 2016/10/9.
+ * <p>Created by Z.pan on 2016/12/31.</p>
  */
+public class Link {
 
-public class FLink {
+    String text;
 
-    FNode source;
-    FNode target;
-    private String text;
+    Node source;
+    Node target;
+    int index = -1;
 
-    public FLink(FNode source, FNode target) {
+    public Link() {
+    }
+
+    public Link(Node source, Node target, String text) {
         this.source = source;
         this.target = target;
+        this.text = text;
     }
 
     public String getText() {
@@ -23,10 +28,9 @@ public class FLink {
         this.text = text;
     }
 
-    double getNodeDistance() {
+    float length() {
         float dx = source.x - target.x;
         float dy = source.y - target.y;
-        return Math.sqrt(dx * dx + dy * dy);
+        return (float) Math.sqrt(dx * dx + dy * dy);
     }
-
 }

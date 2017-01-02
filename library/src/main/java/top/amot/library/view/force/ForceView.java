@@ -3,6 +3,7 @@ package top.amot.library.view.force;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
@@ -12,35 +13,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Force layout from D3.js
- * <p>
- * Created by Z.Pan on 2016/10/8.
+ * <p>Created by Z.pan on 2016/12/31.</p>
  */
 public class ForceView extends View implements ForceListener {
 
     private OnNodeClickListener onNodeClickListener;
 
-    public OnNodeClickListener getOnNodeClickListener() {
-        return onNodeClickListener;
-    }
+    private Simulation simulation = new Simulation.Builder().build();
+    private ScaleGestureDetector scaleDetector;
+    private ForceDrawer drawer;
+
+    private float touchSlop;
+    private float translateX, translateY;
+    private float scale = 1f;
+
+    List<Node> nodes;
+    List<Link> links;
+    private List<Link> targetLinks = new ArrayList<>();
+    private List<Link> sourceLinks = new ArrayList<>();
+    private List<Node> selectedNodes = new ArrayList<>();
+    private Node selectedNode;
+
+    private int activePointerId = -1;
+    private float downX, downY;
+    private float x0, y0;
 
     public void setOnNodeClickListener(OnNodeClickListener onNodeClickListener) {
         this.onNodeClickListener = onNodeClickListener;
     }
-
-    private Force force;
-    private ForceDrawer drawer;
-
-    private float touchSlop;
-    private float downX, downY;
-    private float translateX, translateY;
-    private float scale = 1f;
-    private float x0, y0;
-    private FNode node;
-    private List<FLink> targetLinks = new ArrayList<>();
-    private List<FLink> sourceLinks = new ArrayList<>();
-    private List<FNode> selectedNodes = new ArrayList<>();
-    private ScaleGestureDetector scaleDetector;
 
     public ForceView(Context context) {
         this(context, null);
@@ -56,78 +56,45 @@ public class ForceView extends View implements ForceListener {
     }
 
     private void init() {
-        scaleDetector = new ScaleGestureDetector(getContext(), new ScaleListener());
+        scaleDetector = new ScaleGestureDetector(getContext(), new ForceView.ScaleListener());
         touchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
-
-        force = new Force(this);
         drawer = new ForceDrawer(getContext());
-
-        post(new Runnable() {
-            @Override
-            public void run() {
-                int w = getWidth();
-                int h = getHeight();
-                force.setSize(w, h)
-                        .setStrength(0.7f)
-                        .setFriction(0.8f)
-                        .setDistance(150)
-                        .setCharge(-320f)
-                        .setGravity(0.1f)
-                        .setTheta(0.8f)
-                        .setAlpha(0.2f)
-                        .start();
-            }
-        });
     }
 
-    public void setData(ArrayList<FNode> nodes, ArrayList<FLink> links) {
-        force.setNodes(nodes)
-                .setLinks(links)
-                .start();
-    }
+    public void setSimulation(final Simulation simulation) {
+        this.simulation = simulation;
+        this.nodes = simulation.getNodes();
+        this.links = simulation.getLinks();
+        simulation.setForceListener(ForceView.this);
+        simulation.addForceAlgorithms(
+                new AlgorithmManyBody(),
+                new AlgorithmLink(simulation.getLinks()),
+                new AlgorithmCenter(720 / 2, 1280 / 2)
+        );
 
-    private void resetCanvasState() {
-        translateX = 0;
-        translateY = 0;
-        scale = 1;
-    }
-
-    public void setCurrentLevel(int level) {
-        if (force.getCurrentLevel() == level) {
-            return;
-        }
-        resetCanvasState();
-        force.setCurrentLevel(level).start();
+        simulation.start();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        ArrayList<FNode> nodes = force.nodes;
-        ArrayList<FLink> links = force.links;
+//        Log.e("TAG", "ondraw ");
 
         canvas.save();
-
         canvas.translate(translateX, translateY);
         canvas.scale(scale, scale);
 
-        drawer.drawLinks(canvas, links, node);
-        drawer.drawNodes(canvas, nodes, false);
-        if (!targetLinks.isEmpty()) {
-            drawer.drawLinks(canvas, targetLinks, node);
-        }
-        if (!sourceLinks.isEmpty()) {
-            drawer.drawLinks(canvas, sourceLinks, node);
-        }
-        drawer.drawNodes(canvas, selectedNodes, false);
-        drawer.drawNode(canvas, node, true);
+        drawer.setSelectedNode(selectedNode);
+        drawer.drawLinks(canvas, links);
+        drawer.drawNodes(canvas, nodes);
+        drawer.drawLinks(canvas, targetLinks);
+        drawer.drawLinks(canvas, sourceLinks);
+        drawer.drawNodes(canvas, selectedNodes);
+        drawer.drawNode(canvas, selectedNode, true);
 
         canvas.restore();
-
     }
-
-    private int activePointerId = -1;
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -142,36 +109,37 @@ public class ForceView extends View implements ForceListener {
                 activePointerId = event.getPointerId(0);
                 x0 = downX = x = event.getX();
                 y0 = downY = y = event.getY();
-                node = force.getNode(
-                        x - translateX,
-                        y - translateY,
-                        scale);
-                if (node != null) {
-                    ArrayList<FLink> links = force.links;
-                    for (int i = 0, size = links.size(); i < size; i++) {
-                        FLink link = links.get(i);
-                        if (link.source == node) {
+                selectedNode = simulation.find(x - translateX, y - translateY, scale);
+                if (selectedNode != null) {
+                    List<Link> links = simulation.getLinks();
+                    for (int i = 0; i < links.size(); i++) {
+                        Link link = links.get(i);
+                        if (link.source == selectedNode) {
                             selectedNodes.add(link.target);
                             targetLinks.add(link);
-                        } else if (link.target == node) {
+                        } else if (link.target == selectedNode) {
                             selectedNodes.add(link.source);
                             sourceLinks.add(link);
                         }
                     }
-                    node.setDragState(FNode.DRAG_START);
-                    invalidate();
+
+                    //invalidate();
+                    selectedNode.fx = selectedNode.x;
+                    selectedNode.fy = selectedNode.y;
+                    simulation.setAlphaTarget(0.3f).start();
                 }
                 break;
+
             case MotionEvent.ACTION_MOVE:
                 pointerIndex = event.findPointerIndex(activePointerId);
                 x = event.getX(pointerIndex);
                 y = event.getY(pointerIndex);
 
                 if (Math.abs((x - x0) * (x - y0)) > touchSlop * touchSlop) {
-                    if (node != null) {
-                        node.px = (x - translateX) / scale;
-                        node.py = (y - translateY) / scale;
-                        force.resume();
+                    if (selectedNode != null) {
+                        selectedNode.fx = (x - translateX) / scale;
+                        selectedNode.fy = (y - translateY) / scale;
+                        simulation.start();
                     } else {
                         if (!scaleDetector.isInProgress()) {
                             translateX += x - downX;
@@ -183,27 +151,32 @@ public class ForceView extends View implements ForceListener {
                 downX = x;
                 downY = y;
                 break;
+
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
                 activePointerId = -1;
-                if (node != null) {
-                    node.setDragState(FNode.DRAG_END);
+                if (selectedNode != null) {
+                    simulation.setAlphaTarget(0);
+                    selectedNode.fx = 0;
+                    selectedNode.fy = 0;
+
                     invalidate();
                     x = event.getX();
                     y = event.getY();
                     if (Math.abs((x - x0) * (y - y0)) < touchSlop * touchSlop) {
                         if (onNodeClickListener != null) {
-                            onNodeClickListener.onNodeClick(node);
+                            onNodeClickListener.onNodeClick(selectedNode);
                         }
                     }
-                    node = null;
+                    selectedNode = null;
                 }
                 targetLinks.clear();
                 sourceLinks.clear();
                 selectedNodes.clear();
                 break;
+
             case MotionEvent.ACTION_POINTER_DOWN:
-                node = null;
+                selectedNode = null;
                 targetLinks.clear();
                 sourceLinks.clear();
                 break;
@@ -224,20 +197,16 @@ public class ForceView extends View implements ForceListener {
     }
 
     @Override
-    public void refresh() {
-        invalidate();
-//        postInvalidate();
-    }
-
-    @Override
     protected void onDetachedFromWindow() {
-        force.endTickTask();
+        if (simulation != null) {
+            simulation.stop();
+        }
         super.onDetachedFromWindow();
     }
 
-    private int dp2px(int dp) {
-        float scale = getContext().getResources().getDisplayMetrics().density;
-        return (int) (dp * scale + 0.5f);
+    @Override
+    public void refresh() {
+        postInvalidate();
     }
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
@@ -264,5 +233,4 @@ public class ForceView extends View implements ForceListener {
             return true;
         }
     }
-
 }

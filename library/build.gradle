@@ -19,5 +19,6 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    provided 'com.android.support:appcompat-v7:24.2.1'
 }
