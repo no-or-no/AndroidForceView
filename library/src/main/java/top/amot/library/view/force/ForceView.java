@@ -66,9 +66,11 @@ public class ForceView extends View implements ForceListener {
         this.links = simulation.getLinks();
         simulation.setForceListener(ForceView.this);
         simulation.addForceAlgorithms(
-                new AlgorithmManyBody(),
-                new AlgorithmLink(simulation.getLinks()),
+                new AlgorithmManyBody().setStrength(-15),
+                new AlgorithmLink(simulation.getLinks()).setStrength(2),
                 new AlgorithmCenter(720 / 2, 1280 / 2)
+//                new AlgorithmX(),
+//                new AlgorithmY()
         );
 
         simulation.start();

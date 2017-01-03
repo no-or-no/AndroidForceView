@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * <p>Created by Z.pan on 2017/1/2.</p>
  */
-public class AlgorithmCenter implements ForceAlgorithm {
+class AlgorithmCenter implements ForceAlgorithm {
 
     private List<Node> nodes;
     private float x, y;

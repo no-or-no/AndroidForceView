@@ -179,10 +179,10 @@ public final class Simulation {
         private List<Link> links;
 
         public Builder() {
-            this.initialRadius = 10;
+            this.initialRadius = 50;
             this.initialAngle = (float) (Math.PI * (3 - Math.sqrt(5)));
             this.alpha = 1;
-            this.alphaMin = 0.01f;
+            this.alphaMin = 0.001f;
             this.alphaDecay = (float) (1 - Math.pow(alphaMin, 1.0 / 300));
             this.alphaTarget = 0;
             this.velocityDecay = 0.6f;

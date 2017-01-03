@@ -13,6 +13,7 @@ import static top.amot.library.view.force.ForceAlgorithm.Utils.jiggle;
 class AlgorithmManyBody implements ForceAlgorithm {
 
     private List<Node> nodes;
+    private float strength = -30;
     private float[] strengths;
     private float alpha;
     private float theta2 = 0.81f;
@@ -45,8 +46,13 @@ class AlgorithmManyBody implements ForceAlgorithm {
 
     }
 
+    public AlgorithmManyBody setStrength(float strength) {
+        this.strength = strength;
+        return this;
+    }
+
     private float getStrength(Node node) {
-        return -30f;
+        return strength;
     }
 
     private QuadTree quadTree(List<Node> nodes) {

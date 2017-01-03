@@ -12,6 +12,9 @@ import static top.amot.library.view.force.ForceAlgorithm.Utils.jiggle;
 class AlgorithmLink implements ForceAlgorithm {
 
     private List<Link> links;
+    private float distance = 200f;
+    private float strength;
+
     private int[] count;
     private float[] bias;
     private float[] strengths;
@@ -86,11 +89,31 @@ class AlgorithmLink implements ForceAlgorithm {
         }
     }
 
+    public AlgorithmLink setStrength(float strength) {
+        this.strength = strength;
+        return this;
+    }
+
+    public AlgorithmLink setDistance(float distance) {
+        this.distance = distance;
+        return this;
+    }
+
+    public AlgorithmLink setIterations(int n) {
+        this.iterations = n;
+        return this;
+    }
+
     private float getStrength(Link link) {
-        return 1f / Math.min(count[link.source.index], count[link.target.index]);
+        if (strength == 0) {
+            return 1f / Math.min(count[link.source.index], count[link.target.index]);
+        } else {
+            return strength;
+        }
     }
 
     private float getDistance(Link link) {
-        return 300f;
+        return distance;
     }
+
 }
