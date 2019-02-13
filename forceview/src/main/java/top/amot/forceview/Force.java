@@ -6,15 +6,10 @@ import androidx.annotation.NonNull;
 
 public interface Force {
 
-    static double jiggle() {
-        return (Math.random() - 0.5) * 1e-6;
-    }
-
     /**
-     * optionally implement force.initialize to receive the simulation’s array of nodes.
-     * @param nodes
+     * optionally implement force.initialize to receive the simulation.
      */
-    void initialize(@NonNull Node[] nodes);
+    void initialize(@NonNull Simulation simulation);
 
     /**
      * apply this force to modify nodes’ positions or velocities.
@@ -25,10 +20,14 @@ public interface Force {
     abstract class DefaultImpl implements Force {
         protected Node[] nodes;
 
+        protected static double jiggle() {
+            return (Math.random() - 0.5) * 1e-6;
+        }
+
         @CallSuper
         @Override
-        public void initialize(@NonNull Node[] nodes) {
-            this.nodes = nodes;
+        public void initialize(@NonNull Simulation simulation) {
+            this.nodes = simulation.getNodes();
         }
 
     }

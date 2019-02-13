@@ -202,7 +202,7 @@ public final class Simulation {
         initializeNodes();
 
         for (Force force : forces.values()) {
-            force.initialize(nodes);
+            force.initialize(this);
         }
     }
 

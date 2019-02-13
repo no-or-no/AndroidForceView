@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import top.amot.forceview.Force;
 import top.amot.forceview.Node;
 import top.amot.forceview.QuadTree;
+import top.amot.forceview.Simulation;
 
 /**
  * A positive strength causes nodes to attract each other, similar to gravity, while a negative
@@ -27,8 +28,8 @@ public class ForceManyBody extends Force.DefaultImpl {
     private Node node;
 
     @Override
-    public void initialize(@NonNull Node[] nodes) {
-        super.initialize(nodes);
+    public void initialize(@NonNull Simulation simulation) {
+        super.initialize(simulation);
         initialize();
     }
 
@@ -121,11 +122,11 @@ public class ForceManyBody extends Force.DefaultImpl {
         if (w * w / theta2 < l) {
             if (l < distanceMax2) {
                 if (x == 0) {
-                    x = Force.jiggle();
+                    x = jiggle();
                     l += x * x;
                 }
                 if (y == 0) {
-                    y = Force.jiggle();
+                    y = jiggle();
                     l += y * y;
                 }
                 if (l < distanceMin2) {
@@ -141,11 +142,11 @@ public class ForceManyBody extends Force.DefaultImpl {
 
         if (node.data != this.node || node.next != null) {
             if (x == 0) {
-                x = Force.jiggle();
+                x = jiggle();
                 l += x * x;
             }
             if (y == 0) {
-                y = Force.jiggle();
+                y = jiggle();
                 l += y * y;
             }
             if (l < distanceMin2) {

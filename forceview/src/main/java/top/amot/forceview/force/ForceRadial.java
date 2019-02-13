@@ -3,6 +3,7 @@ package top.amot.forceview.force;
 import androidx.annotation.NonNull;
 import top.amot.forceview.Force;
 import top.amot.forceview.Node;
+import top.amot.forceview.Simulation;
 
 public class ForceRadial extends Force.DefaultImpl {
 
@@ -23,8 +24,8 @@ public class ForceRadial extends Force.DefaultImpl {
     }
 
     @Override
-    public void initialize(@NonNull Node[] nodes) {
-        super.initialize(nodes);
+    public void initialize(@NonNull Simulation simulation) {
+        super.initialize(simulation);
         initialize();
     }
 

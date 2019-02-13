@@ -69,10 +69,6 @@ public class ForceView extends SurfaceView implements SurfaceHolder.Callback, Si
     public void setSimulation(Simulation simulation) {
         this.simulation = simulation;
         simulation.setCallback(this);
-        Force force = simulation.getForce(ForceLink.NAME);
-        if (force != null) {
-            ((ForceLink) force).links(simulation.getLinks());
-        }
     }
 
     public void onNodeClickListener(OnNodeClickListener listener) {

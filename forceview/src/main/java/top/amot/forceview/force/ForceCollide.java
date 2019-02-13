@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import top.amot.forceview.Force;
 import top.amot.forceview.Node;
 import top.amot.forceview.QuadTree;
+import top.amot.forceview.Simulation;
 
 public class ForceCollide extends Force.DefaultImpl {
 
@@ -21,8 +22,8 @@ public class ForceCollide extends Force.DefaultImpl {
     private Node node;
 
     @Override
-    public void initialize(@NonNull Node[] nodes) {
-        super.initialize(nodes);
+    public void initialize(@NonNull Simulation simulation) {
+        super.initialize(simulation);
         initialize();
     }
 
@@ -92,11 +93,11 @@ public class ForceCollide extends Force.DefaultImpl {
                 double l = x * x + y * y;
                 if (l < r * r) {
                     if (x == 0) {
-                        x = Force.jiggle();
+                        x = jiggle();
                         l += x * x;
                     }
                     if (y == 0) {
-                        y = Force.jiggle();
+                        y = jiggle();
                         l += y * y;
                     }
                     l = Math.sqrt(l);

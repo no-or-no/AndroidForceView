@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import top.amot.forceview.Force;
 import top.amot.forceview.Link;
 import top.amot.forceview.Node;
+import top.amot.forceview.Simulation;
 
 public class ForceLink extends Force.DefaultImpl {
 
@@ -22,8 +23,9 @@ public class ForceLink extends Force.DefaultImpl {
     private LinkCalculation distanceCalculation;
 
     @Override
-    public void initialize(@NonNull Node[] nodes) {
-        super.initialize(nodes);
+    public void initialize(@NonNull Simulation simulation) {
+        super.initialize(simulation);
+        links(simulation.getLinks());
         initialize();
     }
 
@@ -37,10 +39,10 @@ public class ForceLink extends Force.DefaultImpl {
                 double x = target.x + target.vx - source.x - source.vx;
                 double y = target.y + target.vy - source.y - source.vy;
                 if (x == 0) {
-                    x = Force.jiggle();
+                    x = jiggle();
                 }
                 if (y == 0) {
-                    y = Force.jiggle();
+                    y = jiggle();
                 }
                 double l = Math.sqrt(x * x + y * y);
                 l = (l - distances[i]) / l * alpha * strengths[i];
