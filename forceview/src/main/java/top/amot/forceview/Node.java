@@ -2,6 +2,8 @@ package top.amot.forceview;
 
 public class Node {
 
+    public static final float RADIUS = 50;
+
     // the node’s zero-based index into nodes
     public int index;
     // the node’s current x-position and y-position, the position is initialized in a phyllotaxis arrangement.
@@ -14,6 +16,14 @@ public class Node {
     public String text;
     public int level;
 
-    public float radius;
+    public float radius = RADIUS;
+
+    public Node() {
+    }
+
+    public Node(String text, int level) {
+        this.text = text;
+        this.level = level;
+    }
 
 }

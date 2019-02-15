@@ -2,6 +2,7 @@ package top.amot.forceview;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -71,18 +72,20 @@ public class ForceView extends SurfaceView implements SurfaceHolder.Callback, Si
         simulation.setCallback(this);
     }
 
-    public void onNodeClickListener(OnNodeClickListener listener) {
+    public void setOnNodeClickListener(OnNodeClickListener listener) {
         onNodeClickListener = listener;
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
+        Log.w("--force", "surfaceCreated");
         isDrawing.set(true);
         simulation.restart();
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        Log.w("--force", "surfaceChanged: width=" + width + ", height=" + height);
         Force force = simulation.getForce(ForceCenter.NAME);
         if (force != null) {
             ((ForceCenter) force).x(width * 0.5).y(height * 0.5);
@@ -91,12 +94,14 @@ public class ForceView extends SurfaceView implements SurfaceHolder.Callback, Si
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
+        Log.w("--force", "surfaceDestroyed");
         isDrawing.set(false);
         simulation.stop();
     }
 
     @Override
     public void onTick() {
+        Log.w("--force", "onTick: isDrawing=" + isDrawing.get());
         if (isDrawing.get()) {
             Canvas canvas = null;
             try {
@@ -117,6 +122,7 @@ public class ForceView extends SurfaceView implements SurfaceHolder.Callback, Si
         canvas.translate(translateX, translateY);
         canvas.scale(scale, scale);
 
+        canvas.drawColor(Color.WHITE);
         drawer.setSelectedNode(selectedNode);
         drawer.drawLinks(canvas, simulation.getLinks());
         drawer.drawNodes(canvas, simulation.getNodes());
@@ -129,7 +135,7 @@ public class ForceView extends SurfaceView implements SurfaceHolder.Callback, Si
 
     @Override
     public void onEnd() {
-
+        Log.w("--force", "onEnd");
     }
 
     @Override
@@ -145,7 +151,7 @@ public class ForceView extends SurfaceView implements SurfaceHolder.Callback, Si
                 activePointerId = event.getPointerId(0);
                 x0 = downX = x = event.getX();
                 y0 = downY = y = event.getY();
-                selectedNode = simulation.find(x - translateX, y - translateY, scale);
+                selectedNode = simulation.find(x - translateX, y - translateY, Node.RADIUS * scale);
                 if (selectedNode != null) {
                     Link[] links = simulation.getLinks();
                     for (Link link : links) {
@@ -159,7 +165,7 @@ public class ForceView extends SurfaceView implements SurfaceHolder.Callback, Si
                     }
                     selectedNode.fx = selectedNode.x;
                     selectedNode.fy = selectedNode.y;
-                    //simulation.setAlphaTarget(0.3f).start();
+                    simulation.restart();
                 }
                 break;
 

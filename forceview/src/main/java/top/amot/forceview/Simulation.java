@@ -1,5 +1,9 @@
 package top.amot.forceview;
 
+import android.content.Context;
+import android.util.Log;
+
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +17,7 @@ public final class Simulation {
         void onEnd();
     }
 
-    private static final double INITIAL_RADIUS = 10;
+    private static final double INITIAL_RADIUS = 30;
     private static final double INITIAL_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
     private double initialRadius;
@@ -227,7 +231,7 @@ public final class Simulation {
             this.alphaMin = 0.001;
             this.alphaDecay = 1 - Math.pow(alphaMin, 1.0 / 300);
             this.alphaTarget = 0;
-            this.velocityDecay = 0.6;
+            this.velocityDecay = 0.3;
 
             this.nodes(null);
             this.links(null);

@@ -247,7 +247,8 @@ public final class QuadTree {
 
         Quad q;
         TreeNode child;
-        while ((q = quads.pop()) != null) {
+        while (!quads.isEmpty()) {
+            q = quads.pop();
             node = q.node;
             double x0 = q.x0, y0 = q.y0, x1 = q.x1, y1 = q.y1;
             if (!callback.visit(node, x0, y0, x1, y1) && !node.isLeaf()) {
@@ -279,7 +280,8 @@ public final class QuadTree {
 
         Quad q;
         TreeNode child;
-        while ((q = quads.pop()) != null) {
+        while (!quads.isEmpty()) {
+            q = quads.pop();
             TreeNode node = q.node;
             if (!node.isLeaf()) {
                 double x0 = q.x0, y0 = q.y0, x1 = q.x1, y1 = q.y1;
@@ -300,7 +302,8 @@ public final class QuadTree {
             next.push(q);
         }
 
-        while ((q = next.pop()) != null) {
+        while (!next.isEmpty()) {
+            q = next.pop();
             callback.visit(q.node, q.x0, q.y0, q.x1, q.y1);
         }
 

@@ -4,7 +4,7 @@ public class Stepper {
 
     private Runnable callback;
     private final Object lock = new Object();
-    private volatile int paused = 1;
+    private volatile int paused = 0;
     private volatile int markAsPaused = 1;
     private volatile int markAsDestroyed = 0;
 
@@ -14,9 +14,11 @@ public class Stepper {
     }
 
     public void restart() {
-        if (paused == 1) {
-            markAsPaused = 0;
-            lock.notify();
+        synchronized (lock) {
+            if (paused == 1) {
+                markAsPaused = 0;
+                lock.notify();
+            }
         }
     }
 
@@ -25,10 +27,12 @@ public class Stepper {
     }
 
     public void destroy() {
-        markAsPaused = 0;
-        markAsDestroyed = 1;
-        if (paused == 1) {
-            lock.notify();
+        synchronized (lock) {
+            markAsPaused = 0;
+            markAsDestroyed = 1;
+            if (paused == 1) {
+                lock.notify();
+            }
         }
     }
 

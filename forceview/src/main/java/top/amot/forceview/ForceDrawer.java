@@ -47,14 +47,14 @@ public class ForceDrawer {
 
         textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setTextAlign(Paint.Align.CENTER);
-        textPaint.setTextSize(sp2px(context, DEFAULT_TEXT_SIZE_SP));
+        textPaint.setTextSize(sp2px(DEFAULT_TEXT_SIZE_SP));
         textPaint.setColor(Color.WHITE);
 
         linkPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
         linkTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         linkTextPaint.setTextAlign(Paint.Align.CENTER);
-        linkTextPaint.setTextSize(sp2px(context, DEFAULT_TEXT_SIZE_SP));
+        linkTextPaint.setTextSize(sp2px(DEFAULT_TEXT_SIZE_SP));
 
         measureText();
 
@@ -113,15 +113,15 @@ public class ForceDrawer {
         float ax1 = (stopX - startX) * ratio + startX;
         float ay1 = (stopY - startY) * ratio + startY;
 
-        ratio = (length - link.target.radius - dp2px(context, 10)) / length;
+        ratio = (length - link.target.radius - dp2px(10)) / length;
         float ax3 = (stopX - startX) * ratio + startX;
         float ay3 = (stopY - startY) * ratio + startY;
 
-        ratio = (length - link.target.radius - dp2px(context, 12)) / length;
+        ratio = (length - link.target.radius - dp2px(12)) / length;
         float ax24 = (stopX - startX) * ratio + startX;
         float ay24 = (stopY - startY) * ratio + startY;
 
-        float l = dp2px(context, 5);
+        float l = dp2px(5);
         float dx = (stopY - startY) / length * l;
         float dy = (startX - stopX) / length * l;
 
@@ -178,7 +178,7 @@ public class ForceDrawer {
         float cy = (float) node.y;
 
         paint.setColor(getColor(node.level));
-        canvas.drawCircle(cx, cy, (float) node.radius, paint);
+        canvas.drawCircle(cx, cy, node.radius, paint);
 
         String text = node.text;
         if (text == null) {
@@ -228,12 +228,12 @@ public class ForceDrawer {
         return colors.get(level);
     }
 
-    private static int sp2px(Context context, float sp) {
+    private int sp2px(double sp) {
         float scale = context.getResources().getDisplayMetrics().scaledDensity;
         return (int) (sp * scale + 0.5f);
     }
 
-    private static int dp2px(Context context, float dp) {
+    private int dp2px(double dp) {
         float scale = context.getResources().getDisplayMetrics().density;
         return (int) (dp * scale + 0.5f);
     }

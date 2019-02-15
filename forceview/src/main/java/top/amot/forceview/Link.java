@@ -8,6 +8,15 @@ public class Link {
 
     public String text;
 
+    public Link() {
+    }
+
+    public Link(Node source, Node target, String text) {
+        this.source = source;
+        this.target = target;
+        this.text = text;
+    }
+
     float length() {
         double dx = source.x - target.x;
         double dy = source.y - target.y;
