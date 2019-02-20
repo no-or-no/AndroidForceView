@@ -2,7 +2,7 @@ package top.amot.forceview;
 
 public class Node {
 
-    public static final float RADIUS = 50;
+    public static final float RADIUS = 60;
 
     // the node’s zero-based index into nodes
     public int index;

@@ -2,5 +2,7 @@
 
 Android 力导向图，算法来自于 D3.js [d3-force](https://github.com/d3/d3-force/tree/v1.2.0)。
 
+**1000 个节点也不会卡顿！**
+
 ![效果图](https://github.com/Amot-zpan/AndroidForceView/blob/master/art/androidforceview.gif)
 
