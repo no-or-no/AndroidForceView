@@ -12,6 +12,7 @@ import top.amot.forceview.force.ForceManyBody;
 import top.amot.forceview.force.ForceRadial;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -75,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
         Random r = new Random();
         for (int i = 5; i < 10; i++) {
             Node node = nodes.get(i);
-            int n = r.nextInt(50) + 50;
+            int n = r.nextInt(10) + 10;
             for (int j = 0; j < n; j++) {
                 Node child = new Node(node.text + (j + 1), 3);
                 nodes.add(child);
@@ -85,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
 
         int last = nodes.size() - 1;
 
-        for (int i = last; i > last - 20; i--) {
+        for (int i = last; i > last - 10; i--) {
             Node node = nodes.get(r.nextInt(nodes.size()));
             int n = r.nextInt(10);
             for (int j = 0; j < n; j++) {
@@ -94,6 +95,8 @@ public class MainActivity extends AppCompatActivity {
                 links.add(new Link(node, child, node.text + "-" + child.text));
             }
         }
+
+        Log.e("MainActivity", "nodes count: " + nodes.size() + ", links count:" + links.size());
     }
 
     private void show(String text) {

@@ -19,6 +19,7 @@ public final class Simulation {
 
     private static final double INITIAL_RADIUS = 30;
     private static final double INITIAL_ANGLE = Math.PI * (3 - Math.sqrt(5));
+    private static final int DEFAULT_ITERATIONS = 1;
 
     private double initialRadius;
     private double initialAngle;
@@ -28,12 +29,18 @@ public final class Simulation {
     private double alphaTarget;
     private double velocityDecay;
     private Map<String, Force> forces;
+    private int iterations = DEFAULT_ITERATIONS;
 
     private Node[] nodes;
     private Link[] links;
 
     private Stepper stepper = new Stepper(this::step);
     private Callback callback;
+
+    public Simulation setIterations(int i) {
+        iterations = i;
+        return this;
+    }
 
     public Node[] getNodes() {
         return nodes;
@@ -116,7 +123,7 @@ public final class Simulation {
     }
 
     private void step() {
-        tick(1);
+        tick(iterations);
         if (callback != null) {
             callback.onTick();
         }
@@ -130,7 +137,7 @@ public final class Simulation {
 
     private void tick(int iterations) {
         if (iterations <= 0) {
-            iterations = 1;
+            iterations = DEFAULT_ITERATIONS;
         }
 
         for (int k = 0; k < iterations; k++) {

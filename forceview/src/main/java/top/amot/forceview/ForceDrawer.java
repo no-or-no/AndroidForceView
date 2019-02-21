@@ -5,6 +5,12 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.text.Layout;
+import android.text.StaticLayout;
+import android.text.TextDirectionHeuristic;
+import android.text.TextDirectionHeuristics;
+import android.text.TextPaint;
+import android.util.Log;
 import android.util.SparseIntArray;
 
 import java.util.List;
@@ -15,9 +21,9 @@ public class ForceDrawer {
     private static final int LOW = -1;
 
     private Paint paint;
-    private Paint textPaint;
+    private TextPaint textPaint;
     private Paint linkPaint;
-    private Paint linkTextPaint;
+    private TextPaint linkTextPaint;
 
     private Path arrowPath = new Path();
     private SparseIntArray colors;
@@ -45,14 +51,14 @@ public class ForceDrawer {
         paint.setColor(Color.LTGRAY);
         paint.setStyle(Paint.Style.FILL_AND_STROKE);
 
-        textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        textPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setTextAlign(Paint.Align.CENTER);
         textPaint.setTextSize(sp2px(DEFAULT_TEXT_SIZE_SP));
         textPaint.setColor(Color.WHITE);
 
         linkPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-        linkTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        linkTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
         linkTextPaint.setTextAlign(Paint.Align.CENTER);
         linkTextPaint.setTextSize(sp2px(DEFAULT_TEXT_SIZE_SP));
 
@@ -184,28 +190,37 @@ public class ForceDrawer {
         if (text == null) {
             text = "";
         }
+
         double w = Math.sqrt(4 * node.radius * node.radius - textHeight * textHeight) - padding * 2;
         float textWidth = textPaint.measureText(text);
         float n;
-        if (w >= textWidth) {
+        if (w >= textWidth) { // 一行能装下
             canvas.drawText(text, cx, cy - textBaseline, textPaint);
-        } else {
+        } else { // 一行装不下
             float th = textHeight * 2;
-            w = Math.sqrt(4 * node.radius * node.radius - th * th) - padding * 2;
-
-            n = (float) w / textWidth;
-            int end = (int) (text.length() * n);
-            if (end < text.length() - 1) {
-                canvas.drawText(text.substring(0, end), cx, cy - textHeight * 0.5f - textBaseline, textPaint);
-                String t;
-                if (textWidth > 2 * w) {
-                    t = text.substring(end, 2 * end - 1) + "...";
+            // 如果能够排成两行，并且排成两行之后，每行减去 padding 之后还能装下内容
+            double ww;
+            if (th > node.radius && (ww = Math.sqrt(4 * node.radius * node.radius - th * th) - padding * 2) > 0) {
+                int end = Math.round((float) ww / textWidth * text.length());
+                if (end < text.length()) {
+                    canvas.drawText(text.substring(0, end), cx, cy - textHeight * 0.5f - textBaseline, textPaint);
+                    String t;
+                    // 两行都装不下，就省略
+                    if (textWidth > 2 * ww) {
+                        t = text.substring(end, 2 * end - 1) + "..";
+                    } else {
+                        t = text.substring(end);
+                    }
+                    canvas.drawText(t, cx, cy + textHeight * 0.5f - textBaseline, textPaint);
                 } else {
-                    t = text.substring(end);
+                    canvas.drawText(text, cx, cy - textBaseline, textPaint);
                 }
-                canvas.drawText(t, cx, cy + textHeight * 0.5f - textBaseline, textPaint);
-            } else {
-                canvas.drawText(text, cx, cy - textBaseline, textPaint);
+            }
+            // 不能排成两行，就只有排一行，多余的字符省略
+            else {
+                int end = Math.round((float) w / textWidth * text.length());
+                String t = text.substring(0, end - 1) + "..";
+                canvas.drawText(t, cx, cy - textBaseline, textPaint);
             }
         }
     }
